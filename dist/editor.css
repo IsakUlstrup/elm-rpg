@@ -1,0 +1,103 @@
+:root {
+  --primary-rgb: 26, 26, 26;
+  --secondary-rgb: 255, 255, 233;
+  --tertiary-rgb: 250, 87, 115;
+
+  --primary-color: rgb(var(--primary-rgb));
+  --secondary-color: rgb(var(--secondary-rgb));
+  --tertiary-color: rgb(var(--tertiary-rgb));
+}
+
+#editor {
+  background: var(--secondary-color);
+  color: var(--primary-color);
+  height: 100vh;
+  overflow-y: scroll;
+  font-size: 14px;
+  font-size:  1.4rem;
+  line-height: 1.4rem;
+}
+
+
+#editor ::selection {
+  background: var(--tertiary-color);
+}
+
+#editor header {
+  margin-bottom: 2rem;
+}
+
+#editor h3 {
+  margin-bottom: 1rem;
+}
+
+#editor header table tr td:first-child {
+  padding-right: 1rem;
+}
+
+#editor .button {
+  display: inline-block;
+  background: none;
+  border: 1px solid var(--primary-color);
+  padding: 0.3rem;
+  outline: none;
+  border-radius: 0.3rem;
+  font-size: 1rem;
+}
+
+#editor .button:hover {
+  transform: scale(1.05);
+  border-color: var(--tertiary-color);
+  color: var(--tertiary-color);
+  background-color: rgba(var(--tertiary-rgb), 0.1);
+}
+
+#editor .button:active {
+  transform: scale(0.95);
+  border-bottom: 0.2rem solid var(--tertiary-color);
+}
+
+#editor li:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+#editor .component {
+  padding: 1rem;
+}
+#editor .component label, input[type=checkbox] {
+  cursor: pointer;
+  display: inline-block;
+  padding: 0.5rem;
+  user-select: none;
+  font-weight: bold;
+}
+#editor .component table {
+  width: 100%;
+}
+#editor .component-attributes td {
+  padding: 0.5rem 0;
+}
+
+#editor .component table td input {
+  width: 100%;
+  border: 1px solid var(--primary-color);
+  border-radius: 0.3rem;
+  background: none;
+  padding: 0.5rem;
+}
+#editor .component table td select {
+  width: 100%;
+}
+
+#editor .component table td input:focus {
+  outline: none;
+  border: 1px solid var(--tertiary-color);
+}
+#editor .component table td:first-child {
+  width: 30%;
+}
+
+#editor .entity-list .entity {
+  margin: 1rem 0;
+  padding-top: 1rem;
+}

@@ -1,0 +1,151 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 62.5%;
+}
+
+#app {
+  height: 100vh;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  font-size: 1.4rem;
+  overflow-y: scroll;
+  display: flex;
+
+  background: #262626;
+  color: white;
+}
+
+#editor {
+  width: 35rem;
+  min-width: 35rem;
+}
+
+#game {
+  user-select: none;
+  padding: 4rem;
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+#game #players, #enemies {
+  flex: 1;
+  text-align: center;
+}
+/* #game .game-entity {
+  margin-bottom: 2rem;
+} */
+
+/* #game .entity-health {
+  width: 100%;
+}
+
+#game .entity-health meter {
+  width: 100%;
+} */
+
+
+#game .items, .skills {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+#game .item {
+  /* border: 1px solid rgb(211, 16, 236); */
+  /* border-radius: 0.3rem; */
+  padding: 1.5rem;
+  margin: 1rem;
+  position: relative;
+  text-align: center;
+  height: 7rem;
+  background: linear-gradient( rgb(255, 225, 54), rgb(255, 123, 0));
+
+  border-radius: 0.8rem;
+  border:white solid 0.4rem;
+}
+#game .item-description {
+  color: #aaa;
+  display: none;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #444;
+  border-radius: 0.3rem;
+  padding: 0.5rem;
+  top: 7rem;
+  width: 10rem;
+}
+#game .item:hover .item-description {
+  display: block;
+}
+
+@font-face {
+  font-family: RoadRage;
+  src: url(assets/Road_Rage.otf);
+}
+@font-face {
+  font-family: Streamster;
+  src: url(assets/Streamster.ttf);
+}
+/* #game .entity-name {
+  font-size: 10rem;
+  text-align: center;
+  margin: 0;
+	color: #fcedd8;
+	font-family: Streamster, cursive;
+	font-weight: 700;
+  text-shadow: 2px 2px 0px #eb452b, 
+                  4px 4px 0px #efa032, 
+                  6px 6px 0px #46b59b, 
+                  8px 8px 0px #017e7f, 
+                  10px 10px 0px #052939,
+                  12px 12px 0px rgba(0, 0, 0, 0.3),
+                  14px 14px 0px rgba(0, 0, 0, 0.3)
+} */
+#game .entity-name {
+  font-family: RoadRage, sans-serif;
+  font-size: 7rem;
+  text-align: center;
+  margin: 0;
+  
+  background: #ec008c;
+  background: -webkit-linear-gradient(to bottom right, #ff7c25, #ec008c);
+  background: linear-gradient(to bottom right, #ff7c25, #ec008c);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0.3rem 0.3rem rgb(25, 228, 255));
+}
+#game .skill {
+  margin: 0.5rem;
+  background: rgb(189, 189, 189);
+  border-radius: 0.8rem;
+  box-shadow: 0.2rem 0.2rem 2rem rgba(0, 0, 0, 1);
+  margin-top: 2rem;
+}
+#game .skill button {
+  position: relative;
+  color: white;
+  display: block;
+  padding: 1rem;
+  background: rgb(238, 18, 102);
+  top: -1.5rem;
+
+  border-radius: 0.8rem;
+  border:white solid 0.4rem;
+}
+#game .skill button  meter {
+  width: 100%;
+}
+#game .skill button:hover {
+  background: rgb(255, 63, 137);
+}
+#game .skill button:active {
+  top: -0.3rem;
+}
+#game .active button {
+  top: -0.5rem;
+}

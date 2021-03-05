@@ -1,0 +1,1 @@
+elm-live src/Main.elm --dir=dist/ -- --output=dist/main.js
