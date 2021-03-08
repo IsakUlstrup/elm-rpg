@@ -7739,15 +7739,6 @@ var $author$project$Ecs$World$removeEntity = F2(
 	});
 var $author$project$Main$skillSystem = F2(
 	function (_v0, world) {
-		var validTargets = F3(
-			function (_v4, parent, entities) {
-				return A2(
-					$elm$core$List$filter,
-					function (e) {
-						return !_Utils_eq(e, parent);
-					},
-					entities);
-			});
 		var maybeBool = function (mby) {
 			if (mby.$ === 'Just') {
 				return true;
@@ -7756,9 +7747,9 @@ var $author$project$Main$skillSystem = F2(
 			}
 		};
 		var useSkill = function (component) {
-			var _v2 = component.data;
-			if (_v2.$ === 'Skill') {
-				var skill = _v2.a;
+			var _v1 = component.data;
+			if (_v1.$ === 'Skill') {
+				var skill = _v1.a;
 				return ((_Utils_cmp(skill.energy, skill.energyUse) > -1) && (skill.autoUse && maybeBool(skill.target))) ? _Utils_update(
 					component,
 					{
@@ -7771,6 +7762,23 @@ var $author$project$Main$skillSystem = F2(
 				return component;
 			}
 		};
+		return _Utils_update(
+			world,
+			{
+				components: A2($elm$core$List$map, useSkill, world.components)
+			});
+	});
+var $author$project$Main$targetSystem = F2(
+	function (_v0, world) {
+		var validTargets = F3(
+			function (_v2, parent, entities) {
+				return A2(
+					$elm$core$List$filter,
+					function (e) {
+						return !_Utils_eq(e, parent);
+					},
+					entities);
+			});
 		var findTarget = function (component) {
 			var _v1 = component.data;
 			if (_v1.$ === 'Skill') {
@@ -7791,18 +7799,11 @@ var $author$project$Main$skillSystem = F2(
 				return component;
 			}
 		};
-		return function (w) {
-			return _Utils_update(
-				w,
-				{
-					components: A2($elm$core$List$map, useSkill, w.components)
-				});
-		}(
-			_Utils_update(
-				world,
-				{
-					components: A2($elm$core$List$map, findTarget, world.components)
-				}));
+		return _Utils_update(
+			world,
+			{
+				components: A2($elm$core$List$map, findTarget, world.components)
+			});
 	});
 var $author$project$Ecs$World$toggleComponent = F2(
 	function (world, component) {
@@ -7857,7 +7858,10 @@ var $author$project$Main$update = F2(
 						world: A2(
 							$author$project$Main$skillSystem,
 							dt,
-							A2($author$project$Main$energySystem, dt, model.world))
+							A2(
+								$author$project$Main$targetSystem,
+								dt,
+								A2($author$project$Main$energySystem, dt, model.world)))
 					});
 			case 'CharacterKey':
 				var key = msg.a;

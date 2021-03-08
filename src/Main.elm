@@ -12,7 +12,6 @@ import Html.Attributes
 import Json.Decode as Decode exposing (Decoder)
 import Random
 import Renderer exposing (GameMsg(..))
-import Skill exposing (SkillData)
 import Stat
 import StatusEffect exposing (StatusEffectData)
 import Uuid exposing (Uuid)
@@ -73,18 +72,9 @@ energySystem dt world =
     { world | components = List.map (energyRegen (dt * baseEnergyRegen)) world.components }
 
 
-skillSystem : Float -> World -> World
-skillSystem _ world =
+targetSystem : Float -> World -> World
+targetSystem _ world =
     let
-        maybeBool : Maybe a -> Bool
-        maybeBool mby =
-            case mby of
-                Just _ ->
-                    True
-
-                Nothing ->
-                    False
-
         validTargets : Bool -> Uuid -> List Entity -> List Entity
         validTargets _ parent entities =
             List.filter (\e -> e /= parent) entities
@@ -97,12 +87,30 @@ skillSystem _ world =
                         | data =
                             Skill
                                 { skill
-                                    | target = validTargets False component.parent world.entities |> List.reverse |> List.head
+                                    | target =
+                                        validTargets False component.parent world.entities
+                                            |> List.reverse
+                                            |> List.head
                                 }
                     }
 
                 _ ->
                     component
+    in
+    { world | components = List.map findTarget world.components }
+
+
+skillSystem : Float -> World -> World
+skillSystem _ world =
+    let
+        maybeBool : Maybe a -> Bool
+        maybeBool mby =
+            case mby of
+                Just _ ->
+                    True
+
+                Nothing ->
+                    False
 
         useSkill : Component -> Component
         useSkill component =
@@ -123,8 +131,7 @@ skillSystem _ world =
                 _ ->
                     component
     in
-    { world | components = List.map findTarget world.components }
-        |> (\w -> { w | components = List.map useSkill w.components })
+    { world | components = List.map useSkill world.components }
 
 
 
@@ -207,6 +214,7 @@ update msg model =
                 , world =
                     model.world
                         |> energySystem dt
+                        |> targetSystem dt
                         |> skillSystem dt
 
                 -- , timestampCounter = model.timestampCounter + 1
