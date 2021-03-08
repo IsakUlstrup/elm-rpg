@@ -7770,12 +7770,20 @@ var $author$project$Main$skillSystem = F2(
 	});
 var $author$project$Main$targetSystem = F2(
 	function (_v0, world) {
-		var validTargets = F3(
-			function (_v2, parent, entities) {
-				return A2(
+		var validTargets = F2(
+			function (parent, entities) {
+				var entityIsPlayer = function (entity) {
+					return A3($author$project$Ecs$World$hasComponentData, $author$project$ComponentData$newPlayerComponentData, world, entity);
+				};
+				return entityIsPlayer(parent) ? A2(
 					$elm$core$List$filter,
 					function (e) {
-						return !_Utils_eq(e, parent);
+						return (!_Utils_eq(e, parent)) && (!entityIsPlayer(e));
+					},
+					entities) : A2(
+					$elm$core$List$filter,
+					function (e) {
+						return (!_Utils_eq(e, parent)) && entityIsPlayer(e);
 					},
 					entities);
 			});
@@ -7792,7 +7800,7 @@ var $author$project$Main$targetSystem = F2(
 								{
 									target: $elm$core$List$head(
 										$elm$core$List$reverse(
-											A3(validTargets, false, component.parent, world.entities)))
+											A2(validTargets, component.parent, world.entities)))
 								}))
 					});
 			} else {

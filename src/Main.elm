@@ -75,9 +75,18 @@ energySystem dt world =
 targetSystem : Float -> World -> World
 targetSystem _ world =
     let
-        validTargets : Bool -> Uuid -> List Entity -> List Entity
-        validTargets _ parent entities =
-            List.filter (\e -> e /= parent) entities
+        validTargets : Uuid -> List Entity -> List Entity
+        validTargets parent entities =
+            let
+                entityIsPlayer : Entity -> Bool
+                entityIsPlayer entity =
+                    Ecs.World.hasComponentData ComponentData.newPlayerComponentData world entity
+            in
+            if entityIsPlayer parent then
+                List.filter (\e -> e /= parent && not (entityIsPlayer e)) entities
+
+            else
+                List.filter (\e -> e /= parent && entityIsPlayer e) entities
 
         findTarget : Component -> Component
         findTarget component =
@@ -88,7 +97,7 @@ targetSystem _ world =
                             Skill
                                 { skill
                                     | target =
-                                        validTargets False component.parent world.entities
+                                        validTargets component.parent world.entities
                                             |> List.reverse
                                             |> List.head
                                 }
