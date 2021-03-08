@@ -3,6 +3,7 @@ module Main exposing (main)
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta, onKeyPress)
 import ComponentData exposing (ComponentData(..))
+import Ecs.Component exposing (Component)
 import Ecs.Editor exposing (EditorMsg(..))
 import Ecs.Entity exposing (Entity)
 import Ecs.World exposing (World)
@@ -11,8 +12,10 @@ import Html.Attributes
 import Json.Decode as Decode exposing (Decoder)
 import Random
 import Renderer exposing (GameMsg(..))
+import Skill exposing (SkillData)
 import Stat
 import StatusEffect exposing (StatusEffectData)
+import Uuid exposing (Uuid)
 
 
 
@@ -39,6 +42,9 @@ getStatusEffects entity world =
 energySystem : Float -> World -> World
 energySystem dt world =
     let
+        baseEnergyRegen =
+            0.003
+
         parentEnergyRegenModifier parent =
             StatusEffect.getStatOfType (getStatusEffects parent world) Stat.EnergyRegen
 
@@ -64,16 +70,45 @@ energySystem dt world =
                 _ ->
                     component
     in
-    { world | components = List.map (energyRegen (dt * 0.003)) world.components }
+    { world | components = List.map (energyRegen (dt * baseEnergyRegen)) world.components }
 
 
 skillSystem : Float -> World -> World
 skillSystem _ world =
     let
+        maybeBool : Maybe a -> Bool
+        maybeBool mby =
+            case mby of
+                Just _ ->
+                    True
+
+                Nothing ->
+                    False
+
+        validTargets : Bool -> Uuid -> List Entity -> List Entity
+        validTargets playerTarget parent entities =
+            List.filter (\e -> e /= parent) entities
+
+        findTarget : Component -> Component
+        findTarget component =
+            case component.data of
+                Skill skill ->
+                    { component
+                        | data =
+                            Skill
+                                { skill
+                                    | target = validTargets False component.parent world.entities |> List.reverse |> List.head
+                                }
+                    }
+
+                _ ->
+                    component
+
+        useSkill : Component -> Component
         useSkill component =
             case component.data of
                 Skill skill ->
-                    if skill.energy >= skill.energyUse && skill.autoUse then
+                    if skill.energy >= skill.energyUse && skill.autoUse && maybeBool skill.target then
                         { component
                             | data =
                                 Skill
@@ -88,7 +123,8 @@ skillSystem _ world =
                 _ ->
                     component
     in
-    { world | components = List.map useSkill world.components }
+    { world | components = List.map findTarget world.components }
+        |> (\w -> { w | components = List.map useSkill w.components })
 
 
 

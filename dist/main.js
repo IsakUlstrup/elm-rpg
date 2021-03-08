@@ -7695,12 +7695,13 @@ var $author$project$Main$energySystem = F2(
 					return component;
 				}
 			});
+		var baseEnergyRegen = 0.003;
 		return _Utils_update(
 			world,
 			{
 				components: A2(
 					$elm$core$List$map,
-					energyRegen(dt * 0.003),
+					energyRegen(dt * baseEnergyRegen),
 					world.components)
 			});
 	});
@@ -7738,11 +7739,27 @@ var $author$project$Ecs$World$removeEntity = F2(
 	});
 var $author$project$Main$skillSystem = F2(
 	function (_v0, world) {
+		var validTargets = F3(
+			function (playerTarget, parent, entities) {
+				return A2(
+					$elm$core$List$filter,
+					function (e) {
+						return !_Utils_eq(e, parent);
+					},
+					entities);
+			});
+		var maybeBool = function (mby) {
+			if (mby.$ === 'Just') {
+				return true;
+			} else {
+				return false;
+			}
+		};
 		var useSkill = function (component) {
-			var _v1 = component.data;
-			if (_v1.$ === 'Skill') {
-				var skill = _v1.a;
-				return ((_Utils_cmp(skill.energy, skill.energyUse) > -1) && skill.autoUse) ? _Utils_update(
+			var _v2 = component.data;
+			if (_v2.$ === 'Skill') {
+				var skill = _v2.a;
+				return ((_Utils_cmp(skill.energy, skill.energyUse) > -1) && (skill.autoUse && maybeBool(skill.target))) ? _Utils_update(
 					component,
 					{
 						data: $author$project$ComponentData$Skill(
@@ -7754,11 +7771,38 @@ var $author$project$Main$skillSystem = F2(
 				return component;
 			}
 		};
-		return _Utils_update(
-			world,
-			{
-				components: A2($elm$core$List$map, useSkill, world.components)
-			});
+		var findTarget = function (component) {
+			var _v1 = component.data;
+			if (_v1.$ === 'Skill') {
+				var skill = _v1.a;
+				return _Utils_update(
+					component,
+					{
+						data: $author$project$ComponentData$Skill(
+							_Utils_update(
+								skill,
+								{
+									target: $elm$core$List$head(
+										$elm$core$List$reverse(
+											A3(validTargets, false, component.parent, world.entities)))
+								}))
+					});
+			} else {
+				return component;
+			}
+		};
+		return function (w) {
+			return _Utils_update(
+				w,
+				{
+					components: A2($elm$core$List$map, useSkill, w.components)
+				});
+		}(
+			_Utils_update(
+				world,
+				{
+					components: A2($elm$core$List$map, findTarget, world.components)
+				}));
 	});
 var $author$project$Ecs$World$toggleComponent = F2(
 	function (world, component) {
