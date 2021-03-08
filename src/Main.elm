@@ -86,7 +86,7 @@ skillSystem _ world =
                     False
 
         validTargets : Bool -> Uuid -> List Entity -> List Entity
-        validTargets playerTarget parent entities =
+        validTargets _ parent entities =
             List.filter (\e -> e /= parent) entities
 
         findTarget : Component -> Component

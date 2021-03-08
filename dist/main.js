@@ -7740,7 +7740,7 @@ var $author$project$Ecs$World$removeEntity = F2(
 var $author$project$Main$skillSystem = F2(
 	function (_v0, world) {
 		var validTargets = F3(
-			function (playerTarget, parent, entities) {
+			function (_v4, parent, entities) {
 				return A2(
 					$elm$core$List$filter,
 					function (e) {
