@@ -1,5 +1,6 @@
 module Skill exposing
     ( SkillData
+    , SkillEffect(..)
     , newSkill
     , skillPresets
     )
@@ -32,7 +33,7 @@ newSkill name description energyUse effects =
 
 skillPresets : List SkillData
 skillPresets =
-    [ newSkill "Laser" "basic attack" 20 [ Damage 10 ]
+    [ newSkill "Laser" "basic attack" 20 [ Damage 0.5 ]
     , newSkill "Stun"
         "stun target"
         20

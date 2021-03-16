@@ -166,6 +166,8 @@ renderStatusEffects statusEffects =
             li [ class "item" ]
                 [ strong [] [ text eff.name ]
                 , br [] []
+                , p [] [ text (Debug.toString eff.duration) ]
+                , br [] []
                 , aside [ class "item-description" ] [ text eff.description ]
                 ]
         )

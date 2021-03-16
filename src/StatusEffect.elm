@@ -1,5 +1,6 @@
 module StatusEffect exposing
     ( StatusEffectData
+    , StatusEffectDuration(..)
     , effectPresets
     , getStatOfType
     , newDuration
@@ -44,7 +45,7 @@ reduceDuration effect value =
     case effect.duration of
         Remaining remaining ->
             { effect
-                | duration = Remaining (max 0 remaining - value)
+                | duration = Remaining (max 0 (remaining - value))
             }
 
         Unlimited ->

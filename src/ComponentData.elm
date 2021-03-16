@@ -8,13 +8,14 @@ module ComponentData exposing
     , isPlayerComponent
     , newHealthComponentData
     , newPlayerComponentData
+    , newStatusEffectComponentData
     , toggleSkill
     )
 
 import Html
 import Html.Attributes
 import Maybe
-import Skill exposing (SkillData)
+import Skill exposing (SkillData, SkillEffect(..))
 import Stat exposing (StatModifier)
 import StatusEffect exposing (StatusEffectData)
 
@@ -235,6 +236,11 @@ newPlayerComponentData =
 newHealthComponentData : ComponentData
 newHealthComponentData =
     Health 1
+
+
+newStatusEffectComponentData : StatusEffectData -> ComponentData
+newStatusEffectComponentData data =
+    StatusEffect data
 
 
 isPlayerComponent : ComponentData -> Bool

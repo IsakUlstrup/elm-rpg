@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta, onKeyPress)
-import ComponentData exposing (ComponentData(..))
+import ComponentData exposing (ComponentData(..), newStatusEffectComponentData)
 import Ecs.Component exposing (Component)
 import Ecs.Editor exposing (EditorMsg(..))
 import Ecs.Entity exposing (Entity)
@@ -12,8 +12,9 @@ import Html.Attributes
 import Json.Decode as Decode exposing (Decoder)
 import Random
 import Renderer exposing (GameMsg(..))
+import Skill exposing (SkillData, SkillEffect(..))
 import Stat
-import StatusEffect exposing (StatusEffectData)
+import StatusEffect exposing (StatusEffectData, StatusEffectDuration(..), reduceDuration)
 import Uuid exposing (Uuid)
 
 
@@ -30,7 +31,7 @@ getStatusEffects entity world =
         |> List.filterMap
             (\a ->
                 case a of
-                    StatusEffect eff ->
+                    ComponentData.StatusEffect eff ->
                         Just eff
 
                     _ ->
@@ -121,26 +122,108 @@ skillSystem _ world =
                 Nothing ->
                     False
 
-        useSkill : Component -> Component
-        useSkill component =
-            case component.data of
-                Skill skill ->
-                    if skill.energy >= skill.energyUse && skill.autoUse && maybeBool skill.target then
-                        { component
-                            | data =
-                                Skill
-                                    { skill
-                                        | energy = 0
-                                    }
-                        }
+        useSkills : World -> World
+        useSkills w =
+            let
+                test : List Component -> World -> ( List Component, World )
+                test components wrld =
+                    case components of
+                        [] ->
+                            ( components, wrld )
 
-                    else
-                        component
+                        x :: xs ->
+                            case x.data of
+                                Skill skill ->
+                                    if skill.energy >= skill.energyUse && skill.autoUse && maybeBool skill.target then
+                                        Ecs.World.updateComponent wrld { x | data = Skill { skill | energy = 0 } }
+                                            |> (\world2 ->
+                                                    List.foldl
+                                                        (\effect wr ->
+                                                            case skill.target of
+                                                                Just target ->
+                                                                    case effect of
+                                                                        Skill.Damage damage ->
+                                                                            { wr
+                                                                                | components =
+                                                                                    List.map
+                                                                                        (\c ->
+                                                                                            if c.parent == target then
+                                                                                                case c.data of
+                                                                                                    ComponentData.Health health ->
+                                                                                                        { c
+                                                                                                            | data =
+                                                                                                                Health
+                                                                                                                    (health
+                                                                                                                        - (damage
+                                                                                                                            / (Ecs.World.enabledEntityComponents wr target
+                                                                                                                                |> List.map (\comp -> comp.data)
+                                                                                                                                |> ComponentData.getHealth
+                                                                                                                                |> Maybe.withDefault 1
+                                                                                                                              )
+                                                                                                                          )
+                                                                                                                    )
+                                                                                                        }
 
-                _ ->
-                    component
+                                                                                                    _ ->
+                                                                                                        c
+
+                                                                                            else
+                                                                                                c
+                                                                                        )
+                                                                                        wr.components
+                                                                            }
+
+                                                                        Skill.StatusEffect statusEffect ->
+                                                                            Ecs.World.addComponent (ComponentData.newStatusEffectComponentData statusEffect) target wr
+
+                                                                _ ->
+                                                                    wr
+                                                        )
+                                                        world2
+                                                        skill.effects
+                                               )
+                                            |> test xs
+
+                                    else
+                                        test xs wrld
+
+                                _ ->
+                                    test xs wrld
+            in
+            Tuple.second (test w.components w)
     in
-    { world | components = List.map useSkill world.components }
+    -- { world | components = List.map useSkill world.components }
+    world |> useSkills
+
+
+statusEffectSystem : Float -> World -> World
+statusEffectSystem dt world =
+    { world
+        | components =
+            List.filterMap
+                (\component ->
+                    case component.data of
+                        ComponentData.StatusEffect effect ->
+                            reduceDuration effect dt
+                                |> (\effectData ->
+                                        case effectData.duration of
+                                            Remaining time ->
+                                                if time > 0 then
+                                                    Just { component | data = newStatusEffectComponentData (reduceDuration effect dt) }
+
+                                                else
+                                                    Nothing
+
+                                            Unlimited ->
+                                                Just { component | data = newStatusEffectComponentData (reduceDuration effect dt) }
+                                   )
+
+                        -- { component | data = newStatusEffectComponentData (reduceDuration effect dt) }
+                        _ ->
+                            Just component
+                )
+                world.components
+    }
 
 
 
@@ -225,6 +308,7 @@ update msg model =
                         |> energySystem dt
                         |> targetSystem dt
                         |> skillSystem dt
+                        |> statusEffectSystem dt
 
                 -- , timestampCounter = model.timestampCounter + 1
                 -- , world = World.setSeed (Random.initialSeed model.timestampCounter) model.world

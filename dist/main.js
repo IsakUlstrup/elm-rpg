@@ -5506,7 +5506,7 @@ var $author$project$Skill$skillPresets = _List_fromArray(
 		20,
 		_List_fromArray(
 			[
-				$author$project$Skill$Damage(10)
+				$author$project$Skill$Damage(0.5)
 			])),
 		A4(
 		$author$project$Skill$newSkill,
@@ -6444,6 +6444,15 @@ var $author$project$Renderer$renderStatusEffects = function (statusEffects) {
 						_List_fromArray(
 							[
 								$elm$html$Html$text(eff.name)
+							])),
+						A2($elm$html$Html$br, _List_Nil, _List_Nil),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								$elm$core$Debug$toString(eff.duration))
 							])),
 						A2($elm$html$Html$br, _List_Nil, _List_Nil),
 						A2(
@@ -7737,6 +7746,24 @@ var $author$project$Ecs$World$removeEntity = F2(
 					world.entities)
 			});
 	});
+var $author$project$ComponentData$newStatusEffectComponentData = function (data) {
+	return $author$project$ComponentData$StatusEffect(data);
+};
+var $author$project$Ecs$World$updateComponent = F2(
+	function (world, component) {
+		return _Utils_update(
+			world,
+			{
+				components: A2(
+					$elm$core$List$map,
+					function (c) {
+						return _Utils_eq(c.id, component.id) ? _Utils_update(
+							c,
+							{data: component.data}) : c;
+					},
+					world.components)
+			});
+	});
 var $author$project$Main$skillSystem = F2(
 	function (_v0, world) {
 		var maybeBool = function (mby) {
@@ -7746,26 +7773,167 @@ var $author$project$Main$skillSystem = F2(
 				return false;
 			}
 		};
-		var useSkill = function (component) {
-			var _v1 = component.data;
-			if (_v1.$ === 'Skill') {
-				var skill = _v1.a;
-				return ((_Utils_cmp(skill.energy, skill.energyUse) > -1) && (skill.autoUse && maybeBool(skill.target))) ? _Utils_update(
-					component,
-					{
-						data: $author$project$ComponentData$Skill(
-							_Utils_update(
-								skill,
-								{energy: 0}))
-					}) : component;
-			} else {
-				return component;
-			}
+		var useSkills = function (w) {
+			var test = F2(
+				function (components, wrld) {
+					test:
+					while (true) {
+						if (!components.b) {
+							return _Utils_Tuple2(components, wrld);
+						} else {
+							var x = components.a;
+							var xs = components.b;
+							var _v2 = x.data;
+							if (_v2.$ === 'Skill') {
+								var skill = _v2.a;
+								if ((_Utils_cmp(skill.energy, skill.energyUse) > -1) && (skill.autoUse && maybeBool(skill.target))) {
+									return A2(
+										test,
+										xs,
+										function (world2) {
+											return A3(
+												$elm$core$List$foldl,
+												F2(
+													function (effect, wr) {
+														var _v3 = skill.target;
+														if (_v3.$ === 'Just') {
+															var target = _v3.a;
+															if (effect.$ === 'Damage') {
+																var damage = effect.a;
+																return _Utils_update(
+																	wr,
+																	{
+																		components: A2(
+																			$elm$core$List$map,
+																			function (c) {
+																				if (_Utils_eq(c.parent, target)) {
+																					var _v5 = c.data;
+																					if (_v5.$ === 'Health') {
+																						var health = _v5.a;
+																						return _Utils_update(
+																							c,
+																							{
+																								data: $author$project$ComponentData$Health(
+																									health - (damage / A2(
+																										$elm$core$Maybe$withDefault,
+																										1,
+																										$author$project$ComponentData$getHealth(
+																											A2(
+																												$elm$core$List$map,
+																												function (comp) {
+																													return comp.data;
+																												},
+																												A2($author$project$Ecs$World$enabledEntityComponents, wr, target))))))
+																							});
+																					} else {
+																						return c;
+																					}
+																				} else {
+																					return c;
+																				}
+																			},
+																			wr.components)
+																	});
+															} else {
+																var statusEffect = effect.a;
+																return A3(
+																	$author$project$Ecs$World$addComponent,
+																	$author$project$ComponentData$newStatusEffectComponentData(statusEffect),
+																	target,
+																	wr);
+															}
+														} else {
+															return wr;
+														}
+													}),
+												world2,
+												skill.effects);
+										}(
+											A2(
+												$author$project$Ecs$World$updateComponent,
+												wrld,
+												_Utils_update(
+													x,
+													{
+														data: $author$project$ComponentData$Skill(
+															_Utils_update(
+																skill,
+																{energy: 0}))
+													}))));
+								} else {
+									var $temp$components = xs,
+										$temp$wrld = wrld;
+									components = $temp$components;
+									wrld = $temp$wrld;
+									continue test;
+								}
+							} else {
+								var $temp$components = xs,
+									$temp$wrld = wrld;
+								components = $temp$components;
+								wrld = $temp$wrld;
+								continue test;
+							}
+						}
+					}
+				});
+			return A2(test, w.components, w).b;
 		};
+		return useSkills(world);
+	});
+var $author$project$StatusEffect$reduceDuration = F2(
+	function (effect, value) {
+		var _v0 = effect.duration;
+		if (_v0.$ === 'Remaining') {
+			var remaining = _v0.a;
+			return _Utils_update(
+				effect,
+				{
+					duration: $author$project$StatusEffect$Remaining(
+						A2($elm$core$Basics$max, 0, remaining - value))
+				});
+		} else {
+			return effect;
+		}
+	});
+var $author$project$Main$statusEffectSystem = F2(
+	function (dt, world) {
 		return _Utils_update(
 			world,
 			{
-				components: A2($elm$core$List$map, useSkill, world.components)
+				components: A2(
+					$elm$core$List$filterMap,
+					function (component) {
+						var _v0 = component.data;
+						if (_v0.$ === 'StatusEffect') {
+							var effect = _v0.a;
+							return function (effectData) {
+								var _v1 = effectData.duration;
+								if (_v1.$ === 'Remaining') {
+									var time = _v1.a;
+									return (time > 0) ? $elm$core$Maybe$Just(
+										_Utils_update(
+											component,
+											{
+												data: $author$project$ComponentData$newStatusEffectComponentData(
+													A2($author$project$StatusEffect$reduceDuration, effect, dt))
+											})) : $elm$core$Maybe$Nothing;
+								} else {
+									return $elm$core$Maybe$Just(
+										_Utils_update(
+											component,
+											{
+												data: $author$project$ComponentData$newStatusEffectComponentData(
+													A2($author$project$StatusEffect$reduceDuration, effect, dt))
+											}));
+								}
+							}(
+								A2($author$project$StatusEffect$reduceDuration, effect, dt));
+						} else {
+							return $elm$core$Maybe$Just(component);
+						}
+					},
+					world.components)
 			});
 	});
 var $author$project$Main$targetSystem = F2(
@@ -7839,21 +8007,6 @@ var $author$project$ComponentData$toggleSkill = function (data) {
 		return data;
 	}
 };
-var $author$project$Ecs$World$updateComponent = F2(
-	function (world, component) {
-		return _Utils_update(
-			world,
-			{
-				components: A2(
-					$elm$core$List$map,
-					function (c) {
-						return _Utils_eq(c.id, component.id) ? _Utils_update(
-							c,
-							{data: component.data}) : c;
-					},
-					world.components)
-			});
-	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -7864,12 +8017,15 @@ var $author$project$Main$update = F2(
 					{
 						dt: dt,
 						world: A2(
-							$author$project$Main$skillSystem,
+							$author$project$Main$statusEffectSystem,
 							dt,
 							A2(
-								$author$project$Main$targetSystem,
+								$author$project$Main$skillSystem,
 								dt,
-								A2($author$project$Main$energySystem, dt, model.world)))
+								A2(
+									$author$project$Main$targetSystem,
+									dt,
+									A2($author$project$Main$energySystem, dt, model.world))))
 					});
 			case 'CharacterKey':
 				var key = msg.a;
