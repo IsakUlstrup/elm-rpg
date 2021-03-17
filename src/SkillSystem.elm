@@ -55,6 +55,21 @@ processDamage target damage world =
     }
 
 
+processSkillEffect : Skill.SkillData -> Skill.SkillEffect -> World -> World
+processSkillEffect skill effect world =
+    case skill.target of
+        Just target ->
+            case effect of
+                Skill.Damage damage ->
+                    processDamage target damage world
+
+                Skill.StatusEffect statusEffect ->
+                    Ecs.World.addComponent (ComponentData.newStatusEffectComponentData statusEffect) target world
+
+        _ ->
+            world
+
+
 processSkill : List Component -> World -> ( List Component, World )
 processSkill components wrld =
     case components of
@@ -68,19 +83,7 @@ processSkill components wrld =
                         Ecs.World.updateComponent wrld { x | data = Skill { skill | energy = 0 } }
                             |> (\world2 ->
                                     List.foldl
-                                        (\effect wr ->
-                                            case skill.target of
-                                                Just target ->
-                                                    case effect of
-                                                        Skill.Damage damage ->
-                                                            processDamage target damage wr
-
-                                                        Skill.StatusEffect statusEffect ->
-                                                            Ecs.World.addComponent (ComponentData.newStatusEffectComponentData statusEffect) target wr
-
-                                                _ ->
-                                                    wr
-                                        )
+                                        (processSkillEffect skill)
                                         world2
                                         skill.effects
                                )

@@ -7783,6 +7783,26 @@ var $author$project$SkillSystem$processDamage = F3(
 					world.components)
 			});
 	});
+var $author$project$SkillSystem$processSkillEffect = F3(
+	function (skill, effect, world) {
+		var _v0 = skill.target;
+		if (_v0.$ === 'Just') {
+			var target = _v0.a;
+			if (effect.$ === 'Damage') {
+				var damage = effect.a;
+				return A3($author$project$SkillSystem$processDamage, target, damage, world);
+			} else {
+				var statusEffect = effect.a;
+				return A3(
+					$author$project$Ecs$World$addComponent,
+					$author$project$ComponentData$newStatusEffectComponentData(statusEffect),
+					target,
+					world);
+			}
+		} else {
+			return world;
+		}
+	});
 var $author$project$Ecs$World$updateComponent = F2(
 	function (world, component) {
 		return _Utils_update(
@@ -7817,26 +7837,7 @@ var $author$project$SkillSystem$processSkill = F2(
 							function (world2) {
 								return A3(
 									$elm$core$List$foldl,
-									F2(
-										function (effect, wr) {
-											var _v2 = skill.target;
-											if (_v2.$ === 'Just') {
-												var target = _v2.a;
-												if (effect.$ === 'Damage') {
-													var damage = effect.a;
-													return A3($author$project$SkillSystem$processDamage, target, damage, wr);
-												} else {
-													var statusEffect = effect.a;
-													return A3(
-														$author$project$Ecs$World$addComponent,
-														$author$project$ComponentData$newStatusEffectComponentData(statusEffect),
-														target,
-														wr);
-												}
-											} else {
-												return wr;
-											}
-										}),
+									$author$project$SkillSystem$processSkillEffect(skill),
 									world2,
 									skill.effects);
 							}(
