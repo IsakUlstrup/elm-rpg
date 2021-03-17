@@ -12,7 +12,8 @@ import Html.Attributes
 import Json.Decode as Decode exposing (Decoder)
 import Random
 import Renderer exposing (GameMsg(..))
-import Skill exposing (SkillData, SkillEffect(..))
+import Skill exposing (SkillEffect(..))
+import SkillSystem exposing (skillSystem)
 import Stat
 import StatusEffect exposing (StatusEffectData, StatusEffectDuration(..), reduceDuration)
 import Uuid exposing (Uuid)
@@ -108,92 +109,6 @@ targetSystem _ world =
                     component
     in
     { world | components = List.map findTarget world.components }
-
-
-skillSystem : Float -> World -> World
-skillSystem _ world =
-    let
-        maybeBool : Maybe a -> Bool
-        maybeBool mby =
-            case mby of
-                Just _ ->
-                    True
-
-                Nothing ->
-                    False
-
-        useSkills : World -> World
-        useSkills w =
-            let
-                test : List Component -> World -> ( List Component, World )
-                test components wrld =
-                    case components of
-                        [] ->
-                            ( components, wrld )
-
-                        x :: xs ->
-                            case x.data of
-                                Skill skill ->
-                                    if skill.energy >= skill.energyUse && skill.autoUse && maybeBool skill.target then
-                                        Ecs.World.updateComponent wrld { x | data = Skill { skill | energy = 0 } }
-                                            |> (\world2 ->
-                                                    List.foldl
-                                                        (\effect wr ->
-                                                            case skill.target of
-                                                                Just target ->
-                                                                    case effect of
-                                                                        Skill.Damage damage ->
-                                                                            { wr
-                                                                                | components =
-                                                                                    List.map
-                                                                                        (\c ->
-                                                                                            if c.parent == target then
-                                                                                                case c.data of
-                                                                                                    ComponentData.Health health ->
-                                                                                                        { c
-                                                                                                            | data =
-                                                                                                                Health
-                                                                                                                    (health
-                                                                                                                        - (damage
-                                                                                                                            / (Ecs.World.enabledEntityComponents wr target
-                                                                                                                                |> List.map (\comp -> comp.data)
-                                                                                                                                |> ComponentData.getHealth
-                                                                                                                                |> Maybe.withDefault 1
-                                                                                                                              )
-                                                                                                                          )
-                                                                                                                    )
-                                                                                                        }
-
-                                                                                                    _ ->
-                                                                                                        c
-
-                                                                                            else
-                                                                                                c
-                                                                                        )
-                                                                                        wr.components
-                                                                            }
-
-                                                                        Skill.StatusEffect statusEffect ->
-                                                                            Ecs.World.addComponent (ComponentData.newStatusEffectComponentData statusEffect) target wr
-
-                                                                _ ->
-                                                                    wr
-                                                        )
-                                                        world2
-                                                        skill.effects
-                                               )
-                                            |> test xs
-
-                                    else
-                                        test xs wrld
-
-                                _ ->
-                                    test xs wrld
-            in
-            Tuple.second (test w.components w)
-    in
-    -- { world | components = List.map useSkill world.components }
-    world |> useSkills
 
 
 statusEffectSystem : Float -> World -> World

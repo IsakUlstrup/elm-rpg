@@ -7746,6 +7746,50 @@ var $author$project$Ecs$World$removeEntity = F2(
 					world.entities)
 			});
 	});
+var $author$project$SkillSystem$dealDamage = F3(
+	function (target, damage, world) {
+		return _Utils_update(
+			world,
+			{
+				components: A2(
+					$elm$core$List$map,
+					function (c) {
+						if (_Utils_eq(c.parent, target)) {
+							var _v0 = c.data;
+							if (_v0.$ === 'Health') {
+								var health = _v0.a;
+								return _Utils_update(
+									c,
+									{
+										data: $author$project$ComponentData$Health(
+											health - (damage / A2(
+												$elm$core$Maybe$withDefault,
+												1,
+												$author$project$ComponentData$getHealth(
+													A2(
+														$elm$core$List$map,
+														function (comp) {
+															return comp.data;
+														},
+														A2($author$project$Ecs$World$enabledEntityComponents, world, target))))))
+									});
+							} else {
+								return c;
+							}
+						} else {
+							return c;
+						}
+					},
+					world.components)
+			});
+	});
+var $author$project$SkillSystem$maybeBool = function (mby) {
+	if (mby.$ === 'Just') {
+		return true;
+	} else {
+		return false;
+	}
+};
 var $author$project$ComponentData$newStatusEffectComponentData = function (data) {
 	return $author$project$ComponentData$StatusEffect(data);
 };
@@ -7764,122 +7808,79 @@ var $author$project$Ecs$World$updateComponent = F2(
 					world.components)
 			});
 	});
-var $author$project$Main$skillSystem = F2(
-	function (_v0, world) {
-		var maybeBool = function (mby) {
-			if (mby.$ === 'Just') {
-				return true;
+var $author$project$SkillSystem$processSkill = F2(
+	function (components, wrld) {
+		processSkill:
+		while (true) {
+			if (!components.b) {
+				return _Utils_Tuple2(components, wrld);
 			} else {
-				return false;
-			}
-		};
-		var useSkills = function (w) {
-			var test = F2(
-				function (components, wrld) {
-					test:
-					while (true) {
-						if (!components.b) {
-							return _Utils_Tuple2(components, wrld);
-						} else {
-							var x = components.a;
-							var xs = components.b;
-							var _v2 = x.data;
-							if (_v2.$ === 'Skill') {
-								var skill = _v2.a;
-								if ((_Utils_cmp(skill.energy, skill.energyUse) > -1) && (skill.autoUse && maybeBool(skill.target))) {
-									return A2(
-										test,
-										xs,
-										function (world2) {
-											return A3(
-												$elm$core$List$foldl,
-												F2(
-													function (effect, wr) {
-														var _v3 = skill.target;
-														if (_v3.$ === 'Just') {
-															var target = _v3.a;
-															if (effect.$ === 'Damage') {
-																var damage = effect.a;
-																return _Utils_update(
-																	wr,
-																	{
-																		components: A2(
-																			$elm$core$List$map,
-																			function (c) {
-																				if (_Utils_eq(c.parent, target)) {
-																					var _v5 = c.data;
-																					if (_v5.$ === 'Health') {
-																						var health = _v5.a;
-																						return _Utils_update(
-																							c,
-																							{
-																								data: $author$project$ComponentData$Health(
-																									health - (damage / A2(
-																										$elm$core$Maybe$withDefault,
-																										1,
-																										$author$project$ComponentData$getHealth(
-																											A2(
-																												$elm$core$List$map,
-																												function (comp) {
-																													return comp.data;
-																												},
-																												A2($author$project$Ecs$World$enabledEntityComponents, wr, target))))))
-																							});
-																					} else {
-																						return c;
-																					}
-																				} else {
-																					return c;
-																				}
-																			},
-																			wr.components)
-																	});
-															} else {
-																var statusEffect = effect.a;
-																return A3(
-																	$author$project$Ecs$World$addComponent,
-																	$author$project$ComponentData$newStatusEffectComponentData(statusEffect),
-																	target,
-																	wr);
-															}
-														} else {
-															return wr;
-														}
-													}),
-												world2,
-												skill.effects);
-										}(
-											A2(
-												$author$project$Ecs$World$updateComponent,
-												wrld,
+				var x = components.a;
+				var xs = components.b;
+				var _v1 = x.data;
+				if (_v1.$ === 'Skill') {
+					var skill = _v1.a;
+					if ((_Utils_cmp(skill.energy, skill.energyUse) > -1) && (skill.autoUse && $author$project$SkillSystem$maybeBool(skill.target))) {
+						return A2(
+							$author$project$SkillSystem$processSkill,
+							xs,
+							function (world2) {
+								return A3(
+									$elm$core$List$foldl,
+									F2(
+										function (effect, wr) {
+											var _v2 = skill.target;
+											if (_v2.$ === 'Just') {
+												var target = _v2.a;
+												if (effect.$ === 'Damage') {
+													var damage = effect.a;
+													return A3($author$project$SkillSystem$dealDamage, target, damage, wr);
+												} else {
+													var statusEffect = effect.a;
+													return A3(
+														$author$project$Ecs$World$addComponent,
+														$author$project$ComponentData$newStatusEffectComponentData(statusEffect),
+														target,
+														wr);
+												}
+											} else {
+												return wr;
+											}
+										}),
+									world2,
+									skill.effects);
+							}(
+								A2(
+									$author$project$Ecs$World$updateComponent,
+									wrld,
+									_Utils_update(
+										x,
+										{
+											data: $author$project$ComponentData$Skill(
 												_Utils_update(
-													x,
-													{
-														data: $author$project$ComponentData$Skill(
-															_Utils_update(
-																skill,
-																{energy: 0}))
-													}))));
-								} else {
-									var $temp$components = xs,
-										$temp$wrld = wrld;
-									components = $temp$components;
-									wrld = $temp$wrld;
-									continue test;
-								}
-							} else {
-								var $temp$components = xs,
-									$temp$wrld = wrld;
-								components = $temp$components;
-								wrld = $temp$wrld;
-								continue test;
-							}
-						}
+													skill,
+													{energy: 0}))
+										}))));
+					} else {
+						var $temp$components = xs,
+							$temp$wrld = wrld;
+						components = $temp$components;
+						wrld = $temp$wrld;
+						continue processSkill;
 					}
-				});
-			return A2(test, w.components, w).b;
-		};
-		return useSkills(world);
+				} else {
+					var $temp$components = xs,
+						$temp$wrld = wrld;
+					components = $temp$components;
+					wrld = $temp$wrld;
+					continue processSkill;
+				}
+			}
+		}
+	});
+var $author$project$SkillSystem$skillSystem = F2(
+	function (_v0, world) {
+		return A2($author$project$SkillSystem$processSkill, world.components, world).b;
 	});
 var $author$project$StatusEffect$reduceDuration = F2(
 	function (effect, value) {
@@ -8020,7 +8021,7 @@ var $author$project$Main$update = F2(
 							$author$project$Main$statusEffectSystem,
 							dt,
 							A2(
-								$author$project$Main$skillSystem,
+								$author$project$SkillSystem$skillSystem,
 								dt,
 								A2(
 									$author$project$Main$targetSystem,
