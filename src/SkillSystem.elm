@@ -17,31 +17,36 @@ maybeBool mby =
             False
 
 
-dealDamage : Entity -> Float -> World -> World
-dealDamage target damage world =
+dealDamage : Float -> Component -> Component
+dealDamage damage component =
+    case component.data of
+        ComponentData.Health health ->
+            { component
+                | data =
+                    Health
+                        (health
+                            - (damage
+                               -- / (Ecs.World.enabledEntityComponents world target
+                               --     |> List.map (\comp -> comp.data)
+                               --     |> ComponentData.getHealth
+                               --     |> Maybe.withDefault 1
+                               --   )
+                              )
+                        )
+            }
+
+        _ ->
+            component
+
+
+processDamage : Entity -> Float -> World -> World
+processDamage target damage world =
     { world
         | components =
             List.map
                 (\c ->
                     if c.parent == target then
-                        case c.data of
-                            ComponentData.Health health ->
-                                { c
-                                    | data =
-                                        Health
-                                            (health
-                                                - (damage
-                                                    / (Ecs.World.enabledEntityComponents world target
-                                                        |> List.map (\comp -> comp.data)
-                                                        |> ComponentData.getHealth
-                                                        |> Maybe.withDefault 1
-                                                      )
-                                                  )
-                                            )
-                                }
-
-                            _ ->
-                                c
+                        dealDamage damage c
 
                     else
                         c
@@ -68,7 +73,7 @@ processSkill components wrld =
                                                 Just target ->
                                                     case effect of
                                                         Skill.Damage damage ->
-                                                            dealDamage target damage wr
+                                                            processDamage target damage wr
 
                                                         Skill.StatusEffect statusEffect ->
                                                             Ecs.World.addComponent (ComponentData.newStatusEffectComponentData statusEffect) target wr

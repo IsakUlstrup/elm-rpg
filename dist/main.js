@@ -7746,43 +7746,6 @@ var $author$project$Ecs$World$removeEntity = F2(
 					world.entities)
 			});
 	});
-var $author$project$SkillSystem$dealDamage = F3(
-	function (target, damage, world) {
-		return _Utils_update(
-			world,
-			{
-				components: A2(
-					$elm$core$List$map,
-					function (c) {
-						if (_Utils_eq(c.parent, target)) {
-							var _v0 = c.data;
-							if (_v0.$ === 'Health') {
-								var health = _v0.a;
-								return _Utils_update(
-									c,
-									{
-										data: $author$project$ComponentData$Health(
-											health - (damage / A2(
-												$elm$core$Maybe$withDefault,
-												1,
-												$author$project$ComponentData$getHealth(
-													A2(
-														$elm$core$List$map,
-														function (comp) {
-															return comp.data;
-														},
-														A2($author$project$Ecs$World$enabledEntityComponents, world, target))))))
-									});
-							} else {
-								return c;
-							}
-						} else {
-							return c;
-						}
-					},
-					world.components)
-			});
-	});
 var $author$project$SkillSystem$maybeBool = function (mby) {
 	if (mby.$ === 'Just') {
 		return true;
@@ -7793,6 +7756,33 @@ var $author$project$SkillSystem$maybeBool = function (mby) {
 var $author$project$ComponentData$newStatusEffectComponentData = function (data) {
 	return $author$project$ComponentData$StatusEffect(data);
 };
+var $author$project$SkillSystem$dealDamage = F2(
+	function (damage, component) {
+		var _v0 = component.data;
+		if (_v0.$ === 'Health') {
+			var health = _v0.a;
+			return _Utils_update(
+				component,
+				{
+					data: $author$project$ComponentData$Health(health - damage)
+				});
+		} else {
+			return component;
+		}
+	});
+var $author$project$SkillSystem$processDamage = F3(
+	function (target, damage, world) {
+		return _Utils_update(
+			world,
+			{
+				components: A2(
+					$elm$core$List$map,
+					function (c) {
+						return _Utils_eq(c.parent, target) ? A2($author$project$SkillSystem$dealDamage, damage, c) : c;
+					},
+					world.components)
+			});
+	});
 var $author$project$Ecs$World$updateComponent = F2(
 	function (world, component) {
 		return _Utils_update(
@@ -7834,7 +7824,7 @@ var $author$project$SkillSystem$processSkill = F2(
 												var target = _v2.a;
 												if (effect.$ === 'Damage') {
 													var damage = effect.a;
-													return A3($author$project$SkillSystem$dealDamage, target, damage, wr);
+													return A3($author$project$SkillSystem$processDamage, target, damage, wr);
 												} else {
 													var statusEffect = effect.a;
 													return A3(
