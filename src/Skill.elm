@@ -33,7 +33,7 @@ newSkill name description energyUse effects =
 
 skillPresets : List SkillData
 skillPresets =
-    [ newSkill "Laser" "basic attack" 20 [ Damage 0.5 ]
+    [ newSkill "Laser" "basic attack" 20 [ Damage 1 ]
     , newSkill "Stun"
         "stun target"
         20

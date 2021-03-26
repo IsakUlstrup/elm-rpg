@@ -5506,7 +5506,7 @@ var $author$project$Skill$skillPresets = _List_fromArray(
 		20,
 		_List_fromArray(
 			[
-				$author$project$Skill$Damage(0.5)
+				$author$project$Skill$Damage(1)
 			])),
 		A4(
 		$author$project$Skill$newSkill,
@@ -7819,13 +7819,45 @@ var $author$project$SkillSystem$dealDamage = F2(
 	});
 var $author$project$SkillSystem$processDamage = F3(
 	function (target, damage, world) {
+		var getStatusEffects = F2(
+			function (entity, w) {
+				return A2(
+					$elm$core$List$filterMap,
+					function (a) {
+						if (a.$ === 'StatusEffect') {
+							var eff = a.a;
+							return $elm$core$Maybe$Just(eff);
+						} else {
+							return $elm$core$Maybe$Nothing;
+						}
+					},
+					A2(
+						$elm$core$List$map,
+						function (c) {
+							return c.data;
+						},
+						A2($author$project$Ecs$World$enabledEntityComponents, w, entity)));
+			});
+		var getStat = F3(
+			function (entity, w, statType) {
+				return A2(
+					$author$project$StatusEffect$getStatOfType,
+					A2(getStatusEffects, entity, w),
+					statType);
+			});
 		return _Utils_update(
 			world,
 			{
 				components: A2(
 					$elm$core$List$map,
 					function (c) {
-						return _Utils_eq(c.parent, target) ? A2($author$project$SkillSystem$dealDamage, damage, c) : c;
+						return _Utils_eq(c.parent, target) ? A2(
+							$author$project$SkillSystem$dealDamage,
+							damage / A2(
+								$elm$core$Maybe$withDefault,
+								1,
+								A3(getStat, target, world, $author$project$Stat$Health)),
+							c) : c;
 					},
 					world.components)
 			});

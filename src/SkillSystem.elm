@@ -5,6 +5,8 @@ import Ecs.Component exposing (Component)
 import Ecs.Entity exposing (Entity)
 import Ecs.World exposing (World)
 import Skill
+import Stat exposing (StatType)
+import StatusEffect exposing (StatusEffectData)
 
 
 maybeBool : Maybe a -> Bool
@@ -41,12 +43,33 @@ dealDamage damage component =
 
 processDamage : Entity -> Float -> World -> World
 processDamage target damage world =
+    let
+        getStat : Entity -> World -> StatType -> Maybe Float
+        getStat entity w statType =
+            StatusEffect.getStatOfType (getStatusEffects entity w) statType
+
+        getStatusEffects : Entity -> World -> List StatusEffectData
+        getStatusEffects entity w =
+            Ecs.World.enabledEntityComponents w entity
+                |> List.map (\c -> c.data)
+                |> List.filterMap
+                    (\a ->
+                        case a of
+                            StatusEffect eff ->
+                                Just eff
+
+                            _ ->
+                                Nothing
+                    )
+    in
     { world
         | components =
             List.map
                 (\c ->
                     if c.parent == target then
-                        dealDamage damage c
+                        dealDamage
+                            (damage / (getStat target world Stat.Health |> Maybe.withDefault 1))
+                            c
 
                     else
                         c
