@@ -7644,7 +7644,7 @@ var $author$project$Ecs$World$addEntity = function (world) {
 			seed: seed
 		});
 };
-var $author$project$Main$getHealth = F2(
+var $author$project$DeathSystem$getHealth = F2(
 	function (entity, world) {
 		return $author$project$ComponentData$getHealth(
 			A2(
@@ -7673,7 +7673,7 @@ var $author$project$Ecs$World$removeEntity = F2(
 					world.entities)
 			});
 	});
-var $author$project$Main$processEntity = F2(
+var $author$project$DeathSystem$processEntity = F2(
 	function (entities, world) {
 		processEntity:
 		while (true) {
@@ -7682,7 +7682,7 @@ var $author$project$Main$processEntity = F2(
 			} else {
 				var x = entities.a;
 				var xs = entities.b;
-				var _v1 = A2($author$project$Main$getHealth, x, world);
+				var _v1 = A2($author$project$DeathSystem$getHealth, x, world);
 				if (_v1.$ === 'Just') {
 					var health = _v1.a;
 					if (health <= 0) {
@@ -7708,11 +7708,11 @@ var $author$project$Main$processEntity = F2(
 			}
 		}
 	});
-var $author$project$Main$deathSystem = F2(
+var $author$project$DeathSystem$deathSystem = F2(
 	function (_v0, world) {
-		return A2($author$project$Main$processEntity, world.entities, world).b;
+		return A2($author$project$DeathSystem$processEntity, world.entities, world).b;
 	});
-var $author$project$Main$getStatusEffects = F2(
+var $author$project$EnergySystem$getStatusEffects = F2(
 	function (entity, world) {
 		return A2(
 			$elm$core$List$filterMap,
@@ -7745,12 +7745,12 @@ var $elm$core$Basics$min = F2(
 	function (x, y) {
 		return (_Utils_cmp(x, y) < 0) ? x : y;
 	});
-var $author$project$Main$energySystem = F2(
+var $author$project$EnergySystem$energySystem = F2(
 	function (dt, world) {
 		var parentEnergyRegenModifier = function (parent) {
 			return A2(
 				$author$project$StatusEffect$getStatOfType,
-				A2($author$project$Main$getStatusEffects, parent, world),
+				A2($author$project$EnergySystem$getStatusEffects, parent, world),
 				$author$project$Stat$EnergyRegen);
 		};
 		var energyRegen = F2(
@@ -7976,7 +7976,7 @@ var $author$project$StatusEffect$reduceDuration = F2(
 			return effect;
 		}
 	});
-var $author$project$Main$statusEffectSystem = F2(
+var $author$project$StatusEffectSystem$statusEffectSystem = F2(
 	function (dt, world) {
 		return _Utils_update(
 			world,
@@ -8016,7 +8016,7 @@ var $author$project$Main$statusEffectSystem = F2(
 					world.components)
 			});
 	});
-var $author$project$Main$targetSystem = F2(
+var $author$project$TargetSystem$targetSystem = F2(
 	function (_v0, world) {
 		var validTargets = F2(
 			function (parent, entities) {
@@ -8097,18 +8097,18 @@ var $author$project$Main$update = F2(
 					{
 						dt: dt,
 						world: A2(
-							$author$project$Main$deathSystem,
+							$author$project$DeathSystem$deathSystem,
 							dt,
 							A2(
-								$author$project$Main$statusEffectSystem,
+								$author$project$StatusEffectSystem$statusEffectSystem,
 								dt,
 								A2(
 									$author$project$SkillSystem$skillSystem,
 									dt,
 									A2(
-										$author$project$Main$targetSystem,
+										$author$project$TargetSystem$targetSystem,
 										dt,
-										A2($author$project$Main$energySystem, dt, model.world)))))
+										A2($author$project$EnergySystem$energySystem, dt, model.world)))))
 					});
 			case 'CharacterKey':
 				var key = msg.a;

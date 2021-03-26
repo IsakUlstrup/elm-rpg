@@ -2,11 +2,11 @@ module Main exposing (main)
 
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta, onKeyPress)
-import ComponentData exposing (ComponentData(..), newStatusEffectComponentData)
-import Ecs.Component exposing (Component)
+import ComponentData exposing (ComponentData(..))
+import DeathSystem exposing (deathSystem)
 import Ecs.Editor exposing (EditorMsg(..))
-import Ecs.Entity exposing (Entity)
 import Ecs.World exposing (World)
+import EnergySystem exposing (energySystem)
 import Html
 import Html.Attributes
 import Json.Decode as Decode exposing (Decoder)
@@ -14,166 +14,9 @@ import Random
 import Renderer exposing (GameMsg(..))
 import Skill exposing (SkillEffect(..))
 import SkillSystem exposing (skillSystem)
-import Stat
-import StatusEffect exposing (StatusEffectData, StatusEffectDuration(..), reduceDuration)
-import Uuid exposing (Uuid)
-
-
-
--- test stuff
-
-
-getStatusEffects : Entity -> World -> List StatusEffectData
-getStatusEffects entity world =
-    world.components
-        |> List.filter (\c -> c.enabled)
-        |> List.filter (\comp -> comp.parent == entity)
-        |> List.map (\c -> c.data)
-        |> List.filterMap
-            (\a ->
-                case a of
-                    ComponentData.StatusEffect eff ->
-                        Just eff
-
-                    _ ->
-                        Nothing
-            )
-
-
-energySystem : Float -> World -> World
-energySystem dt world =
-    let
-        baseEnergyRegen =
-            0.003
-
-        parentEnergyRegenModifier parent =
-            StatusEffect.getStatOfType (getStatusEffects parent world) Stat.EnergyRegen
-
-        energyRegen amount component =
-            case component.data of
-                Skill skill ->
-                    { component
-                        | data =
-                            Skill
-                                { skill
-                                    | energy =
-                                        min skill.energyUse
-                                            (skill.energy
-                                                + (amount
-                                                    * (parentEnergyRegenModifier component.parent
-                                                        |> Maybe.withDefault 0.1
-                                                      )
-                                                  )
-                                            )
-                                }
-                    }
-
-                _ ->
-                    component
-    in
-    { world | components = List.map (energyRegen (dt * baseEnergyRegen)) world.components }
-
-
-targetSystem : Float -> World -> World
-targetSystem _ world =
-    let
-        validTargets : Uuid -> List Entity -> List Entity
-        validTargets parent entities =
-            let
-                entityIsPlayer : Entity -> Bool
-                entityIsPlayer entity =
-                    Ecs.World.hasComponentData ComponentData.newPlayerComponentData world entity
-            in
-            if entityIsPlayer parent then
-                List.filter (\e -> e /= parent && not (entityIsPlayer e)) entities
-
-            else
-                List.filter (\e -> e /= parent && entityIsPlayer e) entities
-
-        findTarget : Component -> Component
-        findTarget component =
-            case component.data of
-                Skill skill ->
-                    { component
-                        | data =
-                            Skill
-                                { skill
-                                    | target =
-                                        validTargets component.parent world.entities
-                                            |> List.reverse
-                                            |> List.head
-                                }
-                    }
-
-                _ ->
-                    component
-    in
-    { world | components = List.map findTarget world.components }
-
-
-statusEffectSystem : Float -> World -> World
-statusEffectSystem dt world =
-    { world
-        | components =
-            List.filterMap
-                (\component ->
-                    case component.data of
-                        ComponentData.StatusEffect effect ->
-                            reduceDuration effect dt
-                                |> (\effectData ->
-                                        case effectData.duration of
-                                            Remaining time ->
-                                                if time > 0 then
-                                                    Just { component | data = newStatusEffectComponentData (reduceDuration effect dt) }
-
-                                                else
-                                                    Nothing
-
-                                            Unlimited ->
-                                                Just { component | data = newStatusEffectComponentData (reduceDuration effect dt) }
-                                   )
-
-                        -- { component | data = newStatusEffectComponentData (reduceDuration effect dt) }
-                        _ ->
-                            Just component
-                )
-                world.components
-    }
-
-
-getHealth : Entity -> World -> Maybe Float
-getHealth entity world =
-    Ecs.World.enabledEntityComponents world entity
-        |> List.map (\c -> c.data)
-        |> ComponentData.getHealth
-
-
-processEntity : List Entity -> World -> ( List Entity, World )
-processEntity entities world =
-    case entities of
-        [] ->
-            ( entities, world )
-
-        x :: xs ->
-            case getHealth x world of
-                Just health ->
-                    if health <= 0 then
-                        processEntity xs (Ecs.World.removeEntity world x)
-
-                    else
-                        processEntity xs world
-
-                _ ->
-                    processEntity xs world
-
-
-deathSystem : Float -> World -> World
-deathSystem _ world =
-    Tuple.second (processEntity world.entities world)
-
-
-
--- Model
+import StatusEffect exposing (StatusEffectDuration(..))
+import StatusEffectSystem exposing (statusEffectSystem)
+import TargetSystem exposing (targetSystem)
 
 
 type alias Model =
