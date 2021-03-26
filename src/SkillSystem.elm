@@ -71,29 +71,29 @@ processSkillEffect skill effect world =
 
 
 processSkill : List Component -> World -> ( List Component, World )
-processSkill components wrld =
+processSkill components world =
     case components of
         [] ->
-            ( components, wrld )
+            ( components, world )
 
         x :: xs ->
             case x.data of
                 Skill skill ->
                     if skill.energy >= skill.energyUse && skill.autoUse && maybeBool skill.target then
-                        Ecs.World.updateComponent wrld { x | data = Skill { skill | energy = 0 } }
-                            |> (\world2 ->
+                        Ecs.World.updateComponent world { x | data = Skill { skill | energy = 0 } }
+                            |> (\w ->
                                     List.foldl
                                         (processSkillEffect skill)
-                                        world2
+                                        w
                                         skill.effects
                                )
                             |> processSkill xs
 
                     else
-                        processSkill xs wrld
+                        processSkill xs world
 
                 _ ->
-                    processSkill xs wrld
+                    processSkill xs world
 
 
 skillSystem : Float -> World -> World

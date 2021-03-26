@@ -7819,11 +7819,11 @@ var $author$project$Ecs$World$updateComponent = F2(
 			});
 	});
 var $author$project$SkillSystem$processSkill = F2(
-	function (components, wrld) {
+	function (components, world) {
 		processSkill:
 		while (true) {
 			if (!components.b) {
-				return _Utils_Tuple2(components, wrld);
+				return _Utils_Tuple2(components, world);
 			} else {
 				var x = components.a;
 				var xs = components.b;
@@ -7834,16 +7834,16 @@ var $author$project$SkillSystem$processSkill = F2(
 						return A2(
 							$author$project$SkillSystem$processSkill,
 							xs,
-							function (world2) {
+							function (w) {
 								return A3(
 									$elm$core$List$foldl,
 									$author$project$SkillSystem$processSkillEffect(skill),
-									world2,
+									w,
 									skill.effects);
 							}(
 								A2(
 									$author$project$Ecs$World$updateComponent,
-									wrld,
+									world,
 									_Utils_update(
 										x,
 										{
@@ -7854,16 +7854,16 @@ var $author$project$SkillSystem$processSkill = F2(
 										}))));
 					} else {
 						var $temp$components = xs,
-							$temp$wrld = wrld;
+							$temp$world = world;
 						components = $temp$components;
-						wrld = $temp$wrld;
+						world = $temp$world;
 						continue processSkill;
 					}
 				} else {
 					var $temp$components = xs,
-						$temp$wrld = wrld;
+						$temp$world = world;
 					components = $temp$components;
-					wrld = $temp$wrld;
+					world = $temp$world;
 					continue processSkill;
 				}
 			}
