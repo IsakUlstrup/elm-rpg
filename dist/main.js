@@ -6143,6 +6143,8 @@ var $author$project$Ecs$World$hasComponentData = F3(
 					},
 					A2($elm$core$List$filter, $author$project$Ecs$World$enabledFilter, world.components))));
 	});
+var $elm$virtual_dom$VirtualDom$lazy = _VirtualDom_lazy;
+var $elm$html$Html$Lazy$lazy = $elm$virtual_dom$VirtualDom$lazy;
 var $elm$core$Basics$not = _Basics_not;
 var $elm$core$List$maybeCons = F3(
 	function (f, mx, xs) {
@@ -6470,6 +6472,74 @@ var $author$project$Renderer$renderStatusEffects = function (statusEffects) {
 };
 var $author$project$Renderer$renderEntity = F2(
 	function (world, entity) {
+		var renderSkills = A2(
+			$elm$html$Html$ul,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('skills')
+				]),
+			$author$project$Renderer$renderSkillComponents(
+				A2($author$project$Renderer$getSkillComponents, entity, world)));
+		var renderName = A2(
+			$elm$html$Html$h1,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('entity-name')
+				]),
+			A2(
+				$elm$core$List$filterMap,
+				function (name) {
+					if (name.$ === 'Just') {
+						var n = name.a;
+						return $elm$core$Maybe$Just(
+							$elm$html$Html$text(n));
+					} else {
+						return $elm$core$Maybe$Nothing;
+					}
+				},
+				_List_fromArray(
+					[
+						A2($author$project$Renderer$getName, entity, world)
+					])));
+		var renderItems = A2(
+			$elm$html$Html$ul,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('items')
+				]),
+			$author$project$Renderer$renderStatusEffects(
+				A2($author$project$Renderer$getStatusEffects, entity, world)));
+		var renderHealth = A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('entity-health')
+				]),
+			A2(
+				$elm$core$List$filterMap,
+				function (_v2) {
+					var val = _v2.b;
+					if (val.$ === 'Just') {
+						var v = val.a;
+						return $elm$core$Maybe$Just(
+							A2(
+								$elm$html$Html$meter,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$value(
+										$elm$core$String$fromFloat(v))
+									]),
+								_List_Nil));
+					} else {
+						return $elm$core$Maybe$Nothing;
+					}
+				},
+				_List_fromArray(
+					[
+						_Utils_Tuple2(
+						'Health',
+						A2($author$project$Renderer$getHealth, entity, world))
+					])));
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
@@ -6478,27 +6548,7 @@ var $author$project$Renderer$renderEntity = F2(
 				]),
 			_List_fromArray(
 				[
-					A2(
-					$elm$html$Html$h1,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('entity-name')
-						]),
-					A2(
-						$elm$core$List$filterMap,
-						function (name) {
-							if (name.$ === 'Just') {
-								var n = name.a;
-								return $elm$core$Maybe$Just(
-									$elm$html$Html$text(n));
-							} else {
-								return $elm$core$Maybe$Nothing;
-							}
-						},
-						_List_fromArray(
-							[
-								A2($author$project$Renderer$getName, entity, world)
-							]))),
+					renderName,
 					A2(
 					$elm$html$Html$div,
 					_List_fromArray(
@@ -6507,61 +6557,17 @@ var $author$project$Renderer$renderEntity = F2(
 						]),
 					_List_fromArray(
 						[
-							A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('entity-health')
-								]),
-							A2(
-								$elm$core$List$filterMap,
-								function (_v1) {
-									var val = _v1.b;
-									if (val.$ === 'Just') {
-										var v = val.a;
-										return $elm$core$Maybe$Just(
-											A2(
-												$elm$html$Html$meter,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$value(
-														$elm$core$String$fromFloat(v))
-													]),
-												_List_Nil));
-									} else {
-										return $elm$core$Maybe$Nothing;
-									}
-								},
-								_List_fromArray(
-									[
-										_Utils_Tuple2(
-										'Health',
-										A2($author$project$Renderer$getHealth, entity, world))
-									]))),
-							A2(
-							$elm$html$Html$ul,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('skills')
-								]),
-							$author$project$Renderer$renderSkillComponents(
-								A2($author$project$Renderer$getSkillComponents, entity, world))),
-							A2(
-							$elm$html$Html$ul,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('items')
-								]),
-							$author$project$Renderer$renderStatusEffects(
-								A2($author$project$Renderer$getStatusEffects, entity, world))),
+							renderHealth,
+							renderSkills,
+							renderItems,
 							A2(
 							$elm$html$Html$div,
 							_List_Nil,
 							A2(
 								$elm$core$List$filterMap,
-								function (_v3) {
-									var label = _v3.a;
-									var val = _v3.b;
+								function (_v0) {
+									var label = _v0.a;
+									var val = _v0.b;
 									if (val.$ === 'Just') {
 										var v = val.a;
 										return $elm$core$Maybe$Just(
@@ -6613,7 +6619,8 @@ var $author$project$Renderer$render = function (world) {
 				$elm$core$List$reverse(
 					A2(
 						$elm$core$List$map,
-						$author$project$Renderer$renderEntity(world),
+						$elm$html$Html$Lazy$lazy(
+							$author$project$Renderer$renderEntity(world)),
 						A2(
 							$elm$core$List$filter,
 							A2($author$project$Ecs$World$hasComponentData, $author$project$ComponentData$newPlayerComponentData, world),
@@ -6627,7 +6634,8 @@ var $author$project$Renderer$render = function (world) {
 				$elm$core$List$reverse(
 					A2(
 						$elm$core$List$map,
-						$author$project$Renderer$renderEntity(world),
+						$elm$html$Html$Lazy$lazy(
+							$author$project$Renderer$renderEntity(world)),
 						A2(
 							$elm$core$List$filter,
 							function (e) {

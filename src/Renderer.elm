@@ -7,6 +7,7 @@ import Ecs.World exposing (World)
 import Html exposing (Html, aside, br, button, div, h1, li, meter, p, section, strong, text, ul)
 import Html.Attributes exposing (class, id, step, value)
 import Html.Events exposing (onClick)
+import Html.Lazy
 import Skill exposing (SkillData)
 import Stat exposing (StatType)
 import StatusEffect exposing (StatusEffectData)
@@ -48,21 +49,6 @@ getStatusEffects entity world =
                     _ ->
                         Nothing
             )
-
-
-
--- getSkills : Entity -> World -> List SkillData
--- getSkills entity world =
---     Ecs.World.enabledEntityComponents world entity
---         |> List.map (\c -> c.data)
---         |> List.filterMap
---             (\a ->
---                 case a of
---                     Skill eff ->
---                         Just eff
---                     _ ->
---                         Nothing
---             )
 
 
 getSkillComponents : Entity -> World -> List Component
@@ -130,34 +116,6 @@ renderSkillComponents components =
             )
 
 
-
--- renderSkills : List SkillData -> List (Html msg)
--- renderSkills skills =
---     List.map
---         (\skill ->
---             li [ class "skill" ]
---                 [ button []
---                     [ strong [] [ text skill.name ]
---                     -- , br [] []
---                     -- , aside [ class "skill-description" ] [ text (String.fromFloat skill.energy) ]
---                     , br [] []
---                     -- , text ("energy: " ++ String.fromFloat skill.energy ++ " / " ++ String.fromFloat skill.energyUse)
---                     , meter
---                         [ step "any"
---                         , value (String.fromFloat skill.energy)
---                         , Html.Attributes.max (String.fromFloat skill.energyUse)
---                         ]
---                         []
---                     , br [] []
---                     , text ("auto: " ++ Debug.toString skill.autoUse)
---                     , br [] []
---                     , text ("target: " ++ Debug.toString skill.target)
---                     ]
---                 ]
---         )
---         skills
-
-
 renderStatusEffects : List StatusEffectData -> List (Html msg)
 renderStatusEffects statusEffects =
     List.map
@@ -175,21 +133,23 @@ renderStatusEffects statusEffects =
 
 renderEntity : World -> Entity -> Html GameMsg
 renderEntity world entity =
-    div [ class "game-entity" ]
-        [ h1 [ class "entity-name" ]
-            (List.filterMap
-                (\name ->
-                    case name of
-                        Just n ->
-                            Just (text n)
+    let
+        renderName =
+            h1 [ class "entity-name" ]
+                (List.filterMap
+                    (\name ->
+                        case name of
+                            Just n ->
+                                Just (text n)
 
-                        _ ->
-                            Nothing
+                            _ ->
+                                Nothing
+                    )
+                    [ getName entity world ]
                 )
-                [ getName entity world ]
-            )
-        , div [ class "entity-stats" ]
-            [ div [ class "entity-health" ]
+
+        renderHealth =
+            div [ class "entity-health" ]
                 (List.filterMap
                     (\( _, val ) ->
                         case val of
@@ -203,8 +163,19 @@ renderEntity world entity =
                     [ ( "Health", getHealth entity world )
                     ]
                 )
-            , ul [ class "skills" ] (getSkillComponents entity world |> renderSkillComponents)
-            , ul [ class "items" ] (getStatusEffects entity world |> renderStatusEffects)
+
+        renderSkills =
+            ul [ class "skills" ] (getSkillComponents entity world |> renderSkillComponents)
+
+        renderItems =
+            ul [ class "items" ] (getStatusEffects entity world |> renderStatusEffects)
+    in
+    div [ class "game-entity" ]
+        [ renderName
+        , div [ class "entity-stats" ]
+            [ renderHealth
+            , renderSkills
+            , renderItems
             , div []
                 (List.filterMap
                     (\( label, val ) ->
@@ -230,13 +201,13 @@ render world =
     section [ id "game" ]
         [ div [ id "players" ]
             (List.map
-                (renderEntity world)
+                (Html.Lazy.lazy (renderEntity world))
                 (List.filter (Ecs.World.hasComponentData ComponentData.newPlayerComponentData world) world.entities)
                 |> List.reverse
             )
         , div [ id "enemies" ]
             (List.map
-                (renderEntity world)
+                (Html.Lazy.lazy (renderEntity world))
                 (List.filter (\e -> Ecs.World.hasComponentData ComponentData.newPlayerComponentData world e |> not) world.entities)
                 |> List.reverse
             )
