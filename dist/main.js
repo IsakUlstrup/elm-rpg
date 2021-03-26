@@ -6230,7 +6230,6 @@ var $author$project$Renderer$getSkillComponents = F2(
 			function (a) {
 				var _v0 = a.data;
 				if (_v0.$ === 'Skill') {
-					var eff = _v0.a;
 					return $elm$core$Maybe$Just(a);
 				} else {
 					return $elm$core$Maybe$Nothing;
@@ -6517,7 +6516,6 @@ var $author$project$Renderer$renderEntity = F2(
 							A2(
 								$elm$core$List$filterMap,
 								function (_v1) {
-									var label = _v1.a;
 									var val = _v1.b;
 									if (val.$ === 'Just') {
 										var v = val.a;

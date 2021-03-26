@@ -50,19 +50,19 @@ getStatusEffects entity world =
             )
 
 
-getSkills : Entity -> World -> List SkillData
-getSkills entity world =
-    Ecs.World.enabledEntityComponents world entity
-        |> List.map (\c -> c.data)
-        |> List.filterMap
-            (\a ->
-                case a of
-                    Skill eff ->
-                        Just eff
 
-                    _ ->
-                        Nothing
-            )
+-- getSkills : Entity -> World -> List SkillData
+-- getSkills entity world =
+--     Ecs.World.enabledEntityComponents world entity
+--         |> List.map (\c -> c.data)
+--         |> List.filterMap
+--             (\a ->
+--                 case a of
+--                     Skill eff ->
+--                         Just eff
+--                     _ ->
+--                         Nothing
+--             )
 
 
 getSkillComponents : Entity -> World -> List Component
@@ -72,7 +72,7 @@ getSkillComponents entity world =
         |> List.filterMap
             (\a ->
                 case a.data of
-                    Skill eff ->
+                    Skill _ ->
                         Just a
 
                     _ ->
@@ -130,33 +130,32 @@ renderSkillComponents components =
             )
 
 
-renderSkills : List SkillData -> List (Html msg)
-renderSkills skills =
-    List.map
-        (\skill ->
-            li [ class "skill" ]
-                [ button []
-                    [ strong [] [ text skill.name ]
 
-                    -- , br [] []
-                    -- , aside [ class "skill-description" ] [ text (String.fromFloat skill.energy) ]
-                    , br [] []
-
-                    -- , text ("energy: " ++ String.fromFloat skill.energy ++ " / " ++ String.fromFloat skill.energyUse)
-                    , meter
-                        [ step "any"
-                        , value (String.fromFloat skill.energy)
-                        , Html.Attributes.max (String.fromFloat skill.energyUse)
-                        ]
-                        []
-                    , br [] []
-                    , text ("auto: " ++ Debug.toString skill.autoUse)
-                    , br [] []
-                    , text ("target: " ++ Debug.toString skill.target)
-                    ]
-                ]
-        )
-        skills
+-- renderSkills : List SkillData -> List (Html msg)
+-- renderSkills skills =
+--     List.map
+--         (\skill ->
+--             li [ class "skill" ]
+--                 [ button []
+--                     [ strong [] [ text skill.name ]
+--                     -- , br [] []
+--                     -- , aside [ class "skill-description" ] [ text (String.fromFloat skill.energy) ]
+--                     , br [] []
+--                     -- , text ("energy: " ++ String.fromFloat skill.energy ++ " / " ++ String.fromFloat skill.energyUse)
+--                     , meter
+--                         [ step "any"
+--                         , value (String.fromFloat skill.energy)
+--                         , Html.Attributes.max (String.fromFloat skill.energyUse)
+--                         ]
+--                         []
+--                     , br [] []
+--                     , text ("auto: " ++ Debug.toString skill.autoUse)
+--                     , br [] []
+--                     , text ("target: " ++ Debug.toString skill.target)
+--                     ]
+--                 ]
+--         )
+--         skills
 
 
 renderStatusEffects : List StatusEffectData -> List (Html msg)
@@ -192,7 +191,7 @@ renderEntity world entity =
         , div [ class "entity-stats" ]
             [ div [ class "entity-health" ]
                 (List.filterMap
-                    (\( label, val ) ->
+                    (\( _, val ) ->
                         case val of
                             Just v ->
                                 Just

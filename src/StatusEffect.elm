@@ -9,7 +9,7 @@ module StatusEffect exposing
     , reduceDuration
     )
 
-import Stat exposing (StatModifier, StatModifierType, StatType, newStatModifier)
+import Stat exposing (StatModifier, StatType, newStatModifier)
 
 
 type StatusEffectDuration
