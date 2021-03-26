@@ -156,8 +156,8 @@ processEntity entities world =
 
         x :: xs ->
             case getHealth x world of
-                Just n ->
-                    if n == 0 then
+                Just health ->
+                    if health <= 0 then
                         processEntity xs (Ecs.World.removeEntity world x)
 
                     else

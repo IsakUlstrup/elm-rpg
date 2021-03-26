@@ -7676,8 +7676,8 @@ var $author$project$Main$processEntity = F2(
 				var xs = entities.b;
 				var _v1 = A2($author$project$Main$getHealth, x, world);
 				if (_v1.$ === 'Just') {
-					var n = _v1.a;
-					if (!n) {
+					var health = _v1.a;
+					if (health <= 0) {
 						var $temp$entities = xs,
 							$temp$world = A2($author$project$Ecs$World$removeEntity, world, x);
 						entities = $temp$entities;
