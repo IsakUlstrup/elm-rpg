@@ -7638,6 +7638,74 @@ var $author$project$Ecs$World$addEntity = function (world) {
 			seed: seed
 		});
 };
+var $author$project$Main$getHealth = F2(
+	function (entity, world) {
+		return $author$project$ComponentData$getHealth(
+			A2(
+				$elm$core$List$map,
+				function (c) {
+					return c.data;
+				},
+				A2($author$project$Ecs$World$enabledEntityComponents, world, entity)));
+	});
+var $author$project$Ecs$World$removeEntity = F2(
+	function (world, entity) {
+		return _Utils_update(
+			world,
+			{
+				components: A2(
+					$elm$core$List$filter,
+					function (c) {
+						return !_Utils_eq(c.parent, entity);
+					},
+					world.components),
+				entities: A2(
+					$elm$core$List$filter,
+					function (e) {
+						return !_Utils_eq(e, entity);
+					},
+					world.entities)
+			});
+	});
+var $author$project$Main$processEntity = F2(
+	function (entities, world) {
+		processEntity:
+		while (true) {
+			if (!entities.b) {
+				return _Utils_Tuple2(entities, world);
+			} else {
+				var x = entities.a;
+				var xs = entities.b;
+				var _v1 = A2($author$project$Main$getHealth, x, world);
+				if (_v1.$ === 'Just') {
+					var n = _v1.a;
+					if (!n) {
+						var $temp$entities = xs,
+							$temp$world = A2($author$project$Ecs$World$removeEntity, world, x);
+						entities = $temp$entities;
+						world = $temp$world;
+						continue processEntity;
+					} else {
+						var $temp$entities = xs,
+							$temp$world = world;
+						entities = $temp$entities;
+						world = $temp$world;
+						continue processEntity;
+					}
+				} else {
+					var $temp$entities = xs,
+						$temp$world = world;
+					entities = $temp$entities;
+					world = $temp$world;
+					continue processEntity;
+				}
+			}
+		}
+	});
+var $author$project$Main$deathSystem = F2(
+	function (_v0, world) {
+		return A2($author$project$Main$processEntity, world.entities, world).b;
+	});
 var $author$project$Main$getStatusEffects = F2(
 	function (entity, world) {
 		return A2(
@@ -7725,25 +7793,6 @@ var $author$project$Ecs$World$removeComponent = F2(
 						return !_Utils_eq(c.id, component.id);
 					},
 					world.components)
-			});
-	});
-var $author$project$Ecs$World$removeEntity = F2(
-	function (world, entity) {
-		return _Utils_update(
-			world,
-			{
-				components: A2(
-					$elm$core$List$filter,
-					function (c) {
-						return !_Utils_eq(c.parent, entity);
-					},
-					world.components),
-				entities: A2(
-					$elm$core$List$filter,
-					function (e) {
-						return !_Utils_eq(e, entity);
-					},
-					world.entities)
 			});
 	});
 var $author$project$SkillSystem$maybeBool = function (mby) {
@@ -8009,15 +8058,18 @@ var $author$project$Main$update = F2(
 					{
 						dt: dt,
 						world: A2(
-							$author$project$Main$statusEffectSystem,
+							$author$project$Main$deathSystem,
 							dt,
 							A2(
-								$author$project$SkillSystem$skillSystem,
+								$author$project$Main$statusEffectSystem,
 								dt,
 								A2(
-									$author$project$Main$targetSystem,
+									$author$project$SkillSystem$skillSystem,
 									dt,
-									A2($author$project$Main$energySystem, dt, model.world))))
+									A2(
+										$author$project$Main$targetSystem,
+										dt,
+										A2($author$project$Main$energySystem, dt, model.world)))))
 					});
 			case 'CharacterKey':
 				var key = msg.a;
