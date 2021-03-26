@@ -26,14 +26,9 @@ dealDamage damage component =
             { component
                 | data =
                     Health
-                        (health
-                            - (damage
-                               -- / (Ecs.World.enabledEntityComponents world target
-                               --     |> List.map (\comp -> comp.data)
-                               --     |> ComponentData.getHealth
-                               --     |> Maybe.withDefault 1
-                               --   )
-                              )
+                        (max
+                            0
+                            (health - damage)
                         )
             }
 

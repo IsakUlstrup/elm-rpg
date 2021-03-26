@@ -7811,7 +7811,8 @@ var $author$project$SkillSystem$dealDamage = F2(
 			return _Utils_update(
 				component,
 				{
-					data: $author$project$ComponentData$Health(health - damage)
+					data: $author$project$ComponentData$Health(
+						A2($elm$core$Basics$max, 0, health - damage))
 				});
 		} else {
 			return component;
