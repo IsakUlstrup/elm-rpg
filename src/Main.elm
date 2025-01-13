@@ -303,16 +303,6 @@ view model =
         [ Html.Attributes.id "game"
         ]
         [ Map.view (viewEncounter model.player) model.map
-        , Html.div [ Html.Attributes.class "player-status-bar" ]
-            [ Html.div [ Html.Attributes.class "health-history" ]
-                (model.player.healthHistory
-                    |> List.map
-                        (\h ->
-                            Html.p [ Html.Attributes.class "history-item" ] [ String.fromInt h |> Html.text ]
-                        )
-                )
-            , viewTrailMeter model.player.health
-            ]
         ]
 
 
