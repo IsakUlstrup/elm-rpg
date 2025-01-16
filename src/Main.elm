@@ -221,7 +221,6 @@ viewEntity : List (Svg.Attribute msg) -> ( Int, Entity ) -> Svg msg
 viewEntity attrs ( id, entity ) =
     Svg.g
         ([ Render.hexHeightTransform entity.height entity.position
-         , Svg.Attributes.opacity "0.5"
          , Svg.Attributes.class "entity"
          ]
             ++ attrs
