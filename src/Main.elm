@@ -169,8 +169,8 @@ tickTile playerPos dt position ( height, tile ) =
 viewTile : List (Svg.Attribute Msg) -> Int -> ( Point, Tile ) -> Svg Msg
 viewTile attrs height ( position, tile ) =
     let
-        fillColor saturation =
-            Svg.Attributes.fill ("hsl(" ++ String.fromInt tile.hue ++ ", " ++ String.fromInt saturation ++ "%, 75%)")
+        fillColor saturation level =
+            Svg.Attributes.fill ("hsl(" ++ String.fromInt tile.hue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
 
         transform =
             Svg.Attributes.transform ("translate(0, " ++ String.fromFloat (1500 * tile.level) ++ ")")
@@ -185,7 +185,7 @@ viewTile attrs height ( position, tile ) =
             [ Svg.Attributes.class "tile-inner"
             , transform
             ]
-            [ Svg.g [ fillColor 50 ]
+            [ Svg.g [ fillColor 75 80 ]
                 [ Svg.rect
                     [ Svg.Attributes.x "-100"
                     , Svg.Attributes.y "0"
@@ -202,7 +202,7 @@ viewTile attrs height ( position, tile ) =
                     []
                 ]
             , Render.viewHex
-                [ fillColor 75
+                [ fillColor 75 75
                 , Svg.Events.onClick (ClickedTile height position)
                 ]
 
