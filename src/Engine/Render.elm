@@ -11,6 +11,7 @@ module Engine.Render exposing
     , pointToPixel
     , svg
     , viewDebugPath
+    , viewHardcodedHex
     , viewHex
     , viewValidPath
     , zoomCamera
@@ -144,6 +145,11 @@ If you want to translate it, pass hexTransform position as an attribute
 viewHex : List (Attribute msg) -> Svg msg
 viewHex attrs =
     Svg.polygon (cornerListToPoints generateHexCorners :: attrs) []
+
+
+viewHardcodedHex : List (Attribute msg) -> Svg msg
+viewHardcodedHex attrs =
+    Svg.polygon (Svg.Attributes.points "100,0 50,87 -50,87 -100,0 -50,-87 50,-87" :: attrs) []
 
 
 {-| Calculate & set svg transform in screen coordinates

@@ -21,7 +21,7 @@ import Svg.Lazy
 
 renderDistance : Int
 renderDistance =
-    3
+    4
 
 
 
@@ -201,7 +201,7 @@ viewTile attrs height ( position, tile ) =
                     ]
                     []
                 ]
-            , Render.viewHex
+            , Render.viewHardcodedHex
                 [ fillColor 75 75
                 , Svg.Events.onClick (ClickedTile height position)
                 ]
@@ -226,7 +226,7 @@ viewEntity attrs ( id, entity ) =
          ]
             ++ attrs
         )
-        [-- Svg.circle [ Svg.Attributes.r "80" ] []
+        [ Render.viewHardcodedHex []
         ]
 
 
