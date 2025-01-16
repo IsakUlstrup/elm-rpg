@@ -65,7 +65,7 @@ initTiles =
         |> List.indexedMap
             (\index pos ->
                 ( pos
-                , ( index |> modBy 3, index * 20 |> modBy 360 |> Tile 1 )
+                , ( index |> modBy 10, index * 20 |> modBy 360 |> Tile 1 )
                 )
             )
         |> Dict.fromList
@@ -118,7 +118,7 @@ tickTile : Point -> Float -> Point -> ( Int, Tile ) -> ( Int, Tile )
 tickTile playerPos dt position ( height, tile ) =
     let
         rate =
-            0.003
+            0.002
     in
     if Point.distance position playerPos < 3 then
         ( height, { tile | level = tile.level - (dt * rate) |> max 0 } )
@@ -193,13 +193,14 @@ viewTile attrs height ( position, tile ) =
                 [ fillColor 75
                 , Svg.Events.onClick (ClickedTile height position)
                 ]
-            , Svg.text_
-                [ Svg.Attributes.stroke "none"
-                , Svg.Attributes.fill "black"
-                , Svg.Attributes.textAnchor "middle"
-                , Svg.Attributes.pointerEvents "none"
-                ]
-                [ Svg.text (Point.toString position) ]
+
+            -- , Svg.text_
+            --     [ Svg.Attributes.stroke "none"
+            --     , Svg.Attributes.fill "black"
+            --     , Svg.Attributes.textAnchor "middle"
+            --     , Svg.Attributes.pointerEvents "none"
+            --     ]
+            --     [ Svg.text (Point.toString position) ]
             ]
         ]
 
@@ -213,15 +214,13 @@ viewEntity attrs ( id, entity ) =
          ]
             ++ attrs
         )
-        [ Svg.circle [ Svg.Attributes.r "80" ] [] ]
+        [-- Svg.circle [ Svg.Attributes.r "80" ] []
+        ]
 
 
 viewGrid : Dict Point ( Int, Tile ) -> Dict Int Entity -> Svg Msg
 viewGrid tiles entities =
     let
-        _ =
-            Debug.log "Render" ()
-
         playerPos =
             Dict.get 0 entities
                 |> Maybe.map .position
