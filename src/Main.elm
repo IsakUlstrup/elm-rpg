@@ -21,7 +21,7 @@ import Svg.Lazy
 
 renderDistance : Int
 renderDistance =
-    4
+    3
 
 
 
