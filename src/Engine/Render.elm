@@ -72,7 +72,7 @@ pointyTop =
 
 stepSize : number
 stepSize =
-    20
+    50
 
 
 {-| Get the center of a given point in screen coordinates

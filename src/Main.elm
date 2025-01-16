@@ -75,7 +75,7 @@ initTiles =
         |> List.indexedMap
             (\index pos ->
                 ( pos
-                , ( index |> modBy 10, index * 20 |> modBy 360 |> Tile 1 )
+                , ( index |> modBy 3, index * 20 |> modBy 360 |> Tile 1 )
                 )
             )
         |> Dict.fromList
