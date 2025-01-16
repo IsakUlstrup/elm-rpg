@@ -16,6 +16,15 @@ import Svg.Lazy
 
 
 
+-- CONSTANTS
+
+
+renderDistance : Int
+renderDistance =
+    4
+
+
+
 -- TILE
 -- TODO: Add height
 -- TODO: Add animation state
@@ -56,6 +65,7 @@ type alias Model =
     , map : Dict Point ( Int, Tile )
     , entities : Dict Int Entity
     , cameraPosition : Point
+    , cameraHeight : Int
     }
 
 
@@ -78,6 +88,7 @@ init _ =
         initTiles
         (Dict.singleton 0 (Entity ( 0, 0 ) 0))
         ( 0, 0 )
+        0
     , Cmd.none
     )
 
@@ -97,6 +108,7 @@ update msg model =
         ClickedTile height position ->
             ( { model
                 | cameraPosition = position
+                , cameraHeight = height
                 , entities = Dict.update 0 (Maybe.map (\e -> { e | position = position, height = height })) model.entities
               }
             , Cmd.none
@@ -120,7 +132,7 @@ tickTile playerPos dt position ( height, tile ) =
         rate =
             0.002
     in
-    if Point.distance position playerPos < 3 then
+    if Point.distance position playerPos < renderDistance then
         ( height, { tile | level = tile.level - (dt * rate) |> max 0 } )
 
     else
@@ -236,7 +248,7 @@ viewGrid tiles entities =
         allElements =
             tileList
                 ++ entityList
-                |> List.filter (\( point, _ ) -> Point.distance point playerPos < 4)
+                |> List.filter (\( point, _ ) -> Point.distance point playerPos < (renderDistance + 1))
                 |> List.sortBy
                     (\( pos, tile ) ->
                         case tile of
@@ -247,24 +259,17 @@ viewGrid tiles entities =
                                 Render.pointToPixel pos |> Tuple.second
                     )
 
-        distanceClass pos =
-            if Point.distance pos playerPos < 3 then
-                Svg.Attributes.class "close"
-
-            else
-                Svg.Attributes.class "far"
-
         viewElement : ( Point, RenderElement ) -> ( String, Svg Msg )
         viewElement ( pos, el ) =
             case el of
                 EntityElement id entity ->
                     ( String.fromInt id
-                    , viewEntity [ distanceClass pos ] ( id, entity )
+                    , viewEntity [] ( id, entity )
                     )
 
                 TileElement height tile ->
                     ( Point.toString pos
-                    , viewTile [ distanceClass pos ] height ( pos, tile )
+                    , viewTile [] height ( pos, tile )
                     )
     in
     Svg.Keyed.node "g" [] (allElements |> List.map viewElement)
@@ -275,8 +280,8 @@ view model =
     main_
         [ Html.Attributes.id "game"
         ]
-        [ Render.svg []
-            [ Render.pointCamera [ Svg.Attributes.class "camera" ]
+        [ Render.svg [ Svg.Attributes.class "game-svg" ]
+            [ Render.pointHeightCamera [ Svg.Attributes.class "camera" ]
                 [ Svg.Lazy.lazy2 viewGrid model.map model.entities
 
                 --     (model.map
@@ -287,6 +292,7 @@ view model =
                 -- , Svg.g [] (model.entities |> Dict.toList |> List.map viewEntity)
                 ]
                 model.cameraPosition
+                model.cameraHeight
             ]
         ]
 

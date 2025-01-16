@@ -7,6 +7,7 @@ module Engine.Render exposing
     , moveCameraY
     , newCamera
     , pointCamera
+    , pointHeightCamera
     , pointToPixel
     , svg
     , viewDebugPath
@@ -214,6 +215,27 @@ pointCamera attrs children position =
                     ++ String.fromFloat -x
                     ++ "px, "
                     ++ String.fromFloat -y
+                    ++ "px)"
+                )
+    in
+    Svg.g (cameraTransform :: attrs) children
+
+
+{-| Camera element
+-}
+pointHeightCamera : List (Attribute msg) -> List (Svg msg) -> Point -> Int -> Svg msg
+pointHeightCamera attrs children position height =
+    let
+        ( x, y ) =
+            pointToPixel position
+
+        cameraTransform : Attribute msg
+        cameraTransform =
+            Svg.Attributes.style
+                ("transform: translate("
+                    ++ String.fromFloat -x
+                    ++ "px, "
+                    ++ String.fromFloat -(y - (toFloat height * stepSize))
                     ++ "px)"
                 )
     in
