@@ -233,9 +233,9 @@ pointHeightCamera attrs children position height =
         cameraTransform =
             Svg.Attributes.style
                 ("transform: translate("
-                    ++ String.fromFloat -x
+                    ++ String.fromInt -(round x)
                     ++ "px, "
-                    ++ String.fromFloat -(y - (toFloat height * stepSize))
+                    ++ String.fromInt -(y - (toFloat height * stepSize) |> round)
                     ++ "px)"
                 )
     in
