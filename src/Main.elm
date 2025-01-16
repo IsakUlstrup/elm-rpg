@@ -1,46 +1,49 @@
-module Main exposing (Encounter, Model, Msg, main)
+module Main exposing (Model, Msg, main)
 
 import Browser
 import Browser.Events
-import Character exposing (Character, isDead)
-import Content.Characters
-import Encounters.AutoCounter as AutoCounter exposing (AutoCounter, Msg(..))
-import Encounters.Combat exposing (Combat, Msg(..), tickModel)
-import Encounters.Counter as Counter exposing (Counter)
-import Encounters.Debug
-import Html exposing (Attribute, Html, main_)
+import Dict exposing (Dict)
+import Engine.Point as Point exposing (Point)
+import Engine.Render as Render
+import Html exposing (Html, main_)
 import Html.Attributes
-import Html.Events
-import Json.Decode as Decode exposing (Decoder)
-import Map exposing (Direction(..), Map, Position)
-import Meter exposing (Meter, filledPercentage)
 import Random
-import Skill exposing (Skill)
-import Turn
+import Svg exposing (Svg)
+import Svg.Attributes
+import Svg.Events
+import Svg.Keyed
+import Svg.Lazy
 
 
 
--- ENCOUNTER
+-- TILE
+-- TODO: Add height
+-- TODO: Add animation state
+-- TODO: Add state wrapper
 
 
-type Encounter
-    = CounterEncounter Counter
-    | AutoCounterEncounter AutoCounter
-    | Debug
-    | CombatEncounter Combat
+type alias Tile =
+    { hue : Int
+    }
 
 
-tickEncounter : Float -> Position -> Encounter -> Encounter
-tickEncounter dt _ encounter =
-    case encounter of
-        AutoCounterEncounter counter ->
-            counter |> AutoCounter.tick dt |> AutoCounterEncounter
 
-        CombatEncounter combat ->
-            combat |> tickModel dt |> CombatEncounter
+-- ENTITY
 
-        _ ->
-            encounter
+
+type alias Entity =
+    { position : Point
+    , height : Int
+    }
+
+
+
+-- RENDER STUFF
+
+
+type RenderElement
+    = TileElement Int Tile
+    | EntityElement Int Entity
 
 
 
@@ -48,33 +51,34 @@ tickEncounter dt _ encounter =
 
 
 type alias Model =
-    { player : Character
-    , seed : Random.Seed
-    , map : Map Encounter
+    { seed : Random.Seed
+    , map : Dict Point ( Int, Tile )
+    , entities : Dict Int Entity
+    , cameraPosition : Point
     }
+
+
+initTiles : Dict Point ( Int, Tile )
+initTiles =
+    Point.circle 10 ( 0, 0 )
+        |> List.indexedMap
+            (\index pos ->
+                ( pos
+                , ( index |> modBy 3, index * 20 |> modBy 360 |> Tile )
+                )
+            )
+        |> Dict.fromList
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
-        Content.Characters.hero
         (Random.initialSeed 32)
-        (Map.empty
-            |> Map.addEntity ( 0, 0, 0 ) Debug
-            |> Map.addEntity ( -1, 0, 0 ) Debug
-            |> Map.addEntity ( 0, -1, 0 ) (CounterEncounter Counter.zero)
-            |> Map.addEntity ( -1, -1, 0 ) (AutoCounterEncounter (AutoCounter.new 10000))
-            |> Map.addEntity ( 1, 0, 0 ) (CombatEncounter (Combat Content.Characters.ghost Turn.playerIdle))
-        )
+        initTiles
+        (Dict.singleton 0 (Entity ( 0, 0 ) 0))
+        ( 0, 0 )
     , Cmd.none
     )
-
-
-setCurrentEntity : Encounter -> Model -> Model
-setCurrentEntity entity model =
-    { model
-        | map = Map.setCurrentEntity entity model.map
-    }
 
 
 
@@ -82,96 +86,22 @@ setCurrentEntity entity model =
 
 
 type Msg
-    = Tick Float
-    | ClickedMoveMap Direction
-    | CounterMsg Counter.Msg
-    | AutoCounterMsg AutoCounter.Msg
-    | DebugMsg Encounters.Debug.Msg
-    | CombatMsg Encounters.Combat.Msg
+    = ClickedTile Int Point
+    | Tick Float
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, Map.getCurrentEntity model.map ) of
-        ( Tick dt, _ ) ->
+    case msg of
+        ClickedTile height position ->
             ( { model
-                | map =
-                    model.map
-                        |> Map.tick dt
-                        |> Map.updateEntities (tickEncounter dt)
+                | cameraPosition = position
+                , entities = Dict.update 0 (Maybe.map (\e -> { e | position = position, height = height })) model.entities
               }
             , Cmd.none
             )
 
-        ( ClickedMoveMap direction, _ ) ->
-            ( { model | map = Map.move direction model.map }
-            , Cmd.none
-            )
-
-        ( CounterMsg Counter.ClickedIncrement, Just (CounterEncounter counter) ) ->
-            ( setCurrentEntity
-                (counter
-                    |> Counter.increment
-                    |> CounterEncounter
-                )
-                model
-            , Cmd.none
-            )
-
-        ( CounterMsg Counter.ClickedDecrement, Just (CounterEncounter counter) ) ->
-            ( setCurrentEntity
-                (counter
-                    |> Counter.decrement
-                    |> CounterEncounter
-                )
-                model
-            , Cmd.none
-            )
-
-        ( CounterMsg Counter.ClickedReset, Just (CounterEncounter _) ) ->
-            ( setCurrentEntity
-                (CounterEncounter Counter.zero)
-                model
-            , Cmd.none
-            )
-
-        ( AutoCounterMsg AutoCounter.ClickedReset, Just (AutoCounterEncounter counter) ) ->
-            ( setCurrentEntity
-                (counter
-                    |> AutoCounter.reset
-                    |> AutoCounterEncounter
-                )
-                model
-            , Cmd.none
-            )
-
-        ( DebugMsg Encounters.Debug.ClickedRestoreHealth, _ ) ->
-            ( { model | player = Character.heal 100 model.player }
-            , Cmd.none
-            )
-
-        ( CombatMsg (ClickedPlayerSkill index), Just (CombatEncounter combat) ) ->
-            ( case model.player.skills |> List.drop index |> List.head of
-                Just skill ->
-                    let
-                        ( hitRoll, newSeed ) =
-                            Random.step (Character.rollSkill skill model.player combat.enemy) model.seed
-                    in
-                    setCurrentEntity
-                        (CombatEncounter
-                            { combat
-                                | turn = Turn.attacking True
-                                , enemy = Character.hit hitRoll combat.enemy
-                            }
-                        )
-                        { model | seed = newSeed }
-
-                Nothing ->
-                    model
-            , Cmd.none
-            )
-
-        _ ->
+        Tick _ ->
             ( model
             , Cmd.none
             )
@@ -179,122 +109,140 @@ update msg model =
 
 
 -- VIEW
+-- viewTrailMeter : Meter -> Html msg
+-- viewTrailMeter meter =
+--     let
+--         ( trailDelay, valueDelay ) =
+--             if meter.headingDown then
+--                 ( 200, 0 )
+--             else
+--                 ( 0, 200 )
+--     in
+--     Html.div [ Html.Attributes.class "meter" ]
+--         [ Html.div
+--             [ Html.Attributes.class "trail"
+--             , Html.Attributes.style "width" (String.fromInt (filledPercentage meter) ++ "%")
+--             , Html.Attributes.style "transition-delay" (String.fromInt trailDelay ++ "ms")
+--             ]
+--             []
+--         , Html.div
+--             [ Html.Attributes.class "value"
+--             , Html.Attributes.style "width" (String.fromInt (filledPercentage meter) ++ "%")
+--             , Html.Attributes.style "transition-delay" (String.fromInt valueDelay ++ "ms")
+--             ]
+--             []
+--         ]
 
 
-viewTrailMeter : Meter -> Html msg
-viewTrailMeter meter =
+viewTile : List (Svg.Attribute Msg) -> Int -> ( Point, Tile ) -> Svg Msg
+viewTile attrs height ( position, tile ) =
     let
-        ( trailDelay, valueDelay ) =
-            if meter.headingDown then
-                ( 200, 0 )
-
-            else
-                ( 0, 200 )
+        fillColor saturation =
+            Svg.Attributes.fill ("hsl(" ++ String.fromInt tile.hue ++ ", " ++ String.fromInt saturation ++ "%, 75%)")
     in
-    Html.div [ Html.Attributes.class "meter" ]
-        [ Html.div
-            [ Html.Attributes.class "trail"
-            , Html.Attributes.style "width" (String.fromInt (filledPercentage meter) ++ "%")
-            , Html.Attributes.style "transition-delay" (String.fromInt trailDelay ++ "ms")
-            ]
-            []
-        , Html.div
-            [ Html.Attributes.class "value"
-            , Html.Attributes.style "width" (String.fromInt (filledPercentage meter) ++ "%")
-            , Html.Attributes.style "transition-delay" (String.fromInt valueDelay ++ "ms")
-            ]
-            []
-        ]
-
-
-viewSkill : List (Attribute msg) -> List (Html msg) -> Skill -> Html msg
-viewSkill attrs children skill =
-    Html.div
-        (Html.Attributes.class "skill"
-            :: attrs
-        )
-        (Html.p [] [ Html.text skill.name ]
-            :: children
-        )
-
-
-viewCharacter : Character -> List (Attribute msg) -> List (Html msg) -> Html msg
-viewCharacter character attrs children =
-    Html.div
-        ([ Html.Attributes.class "character"
-         , Html.Attributes.attribute "style" ("--animation-duration: " ++ (String.fromInt Turn.duration ++ "ms"))
+    Svg.g
+        ([ Render.hexHeightTransform height position
+         , Svg.Attributes.class "tile"
          ]
             ++ attrs
         )
-        ([ Html.h1 [] [ Html.text character.name ]
-         , Html.div [ Html.Attributes.class "health-history" ]
-            (character.healthHistory
-                |> List.map
-                    (\h ->
-                        Html.p [ Html.Attributes.class "history-item" ] [ String.fromInt h |> Html.text ]
-                    )
-            )
-         , viewTrailMeter character.health
+        [ Svg.g [ Svg.Attributes.class "tile-inner" ]
+            [ Svg.g [ fillColor 50 ]
+                [ Svg.rect
+                    [ Svg.Attributes.x "-100"
+                    , Svg.Attributes.y "0"
+                    , Svg.Attributes.width "200"
+                    , Svg.Attributes.height "5000"
+                    ]
+                    []
+                , Svg.rect
+                    [ Svg.Attributes.x "-50"
+                    , Svg.Attributes.y "0"
+                    , Svg.Attributes.width "100"
+                    , Svg.Attributes.height "5000"
+                    ]
+                    []
+                ]
+            , Render.viewHex
+                [ fillColor 75
+                , Svg.Events.onClick (ClickedTile height position)
+                ]
+            , Svg.text_
+                [ Svg.Attributes.stroke "none"
+                , Svg.Attributes.fill "black"
+                , Svg.Attributes.textAnchor "middle"
+                , Svg.Attributes.pointerEvents "none"
+                ]
+                [ Svg.text (Point.toString position) ]
+            ]
+        ]
+
+
+viewEntity : List (Svg.Attribute msg) -> ( Int, Entity ) -> Svg msg
+viewEntity attrs ( id, entity ) =
+    Svg.g
+        ([ Render.hexHeightTransform entity.height entity.position
+         , Svg.Attributes.opacity "0.5"
+         , Svg.Attributes.class "entity"
          ]
-            ++ children
+            ++ attrs
         )
+        [ Svg.circle [ Svg.Attributes.r "80" ] [] ]
 
 
-viewCombat : Character -> Combat -> Html Encounters.Combat.Msg
-viewCombat player model =
-    Html.div []
-        [ viewCharacter model.enemy
-            [ Html.Attributes.classList
-                [ ( "enemy", True )
-                , ( "active", Turn.isEnemyTurn model.turn )
-                , ( "hurt", Turn.isTakingDamage False model.turn )
-                , ( "attacking", Turn.isAttacking False model.turn )
-                , ( "dead", isDead model.enemy )
-                ]
-            ]
-            [ Html.div [ Html.Attributes.class "skills" ] (model.enemy.skills |> List.take 1 |> List.map (viewSkill [] []))
-            ]
-        , viewCharacter player
-            [ Html.Attributes.classList
-                [ ( "player", True )
-                , ( "active", Turn.isPlayerTurn model.turn )
-                , ( "hurt", Turn.isTakingDamage True model.turn )
-                , ( "attacking", Turn.isAttacking True model.turn )
-                , ( "dead", isDead player )
-                ]
-            ]
-            [ Html.div [ Html.Attributes.class "skills" ]
-                (List.indexedMap
-                    (\index skill ->
-                        viewSkill
-                            [ Html.Events.onClick (ClickedPlayerSkill index)
-                            ]
-                            []
-                            skill
+viewGrid : Dict Point ( Int, Tile ) -> Dict Int Entity -> Svg Msg
+viewGrid tiles entities =
+    let
+        _ =
+            Debug.log "Render" ()
+
+        playerPos =
+            Dict.get 0 entities
+                |> Maybe.map .position
+                |> Maybe.withDefault ( 0, 0 )
+
+        tileList =
+            tiles |> Dict.toList |> List.map (\( position, ( height, tile ) ) -> ( position, TileElement height tile ))
+
+        entityList =
+            entities |> Dict.toList |> List.map (\( id, entity ) -> ( entity.position, EntityElement id entity ))
+
+        allElements : List ( Point, RenderElement )
+        allElements =
+            tileList
+                ++ entityList
+                |> List.filter (\( point, _ ) -> Point.distance point playerPos < 4)
+                |> List.sortBy
+                    (\( pos, tile ) ->
+                        case tile of
+                            EntityElement _ _ ->
+                                Render.pointToPixel pos |> Tuple.second |> (+) 0.1
+
+                            TileElement _ _ ->
+                                Render.pointToPixel pos |> Tuple.second
                     )
-                    player.skills
-                )
-            ]
-        ]
 
+        distanceClass pos =
+            if Point.distance pos playerPos < 3 then
+                Svg.Attributes.class "close"
 
-viewEncounter : Character -> Position -> Encounter -> Html Msg
-viewEncounter player position encounter =
-    Html.div [ Html.Attributes.class "encounter" ]
-        [ Html.h3 [] [ Html.text (Map.positionToString position) ]
-        , case encounter of
-            CounterEncounter counter ->
-                Html.map CounterMsg (Counter.view counter)
+            else
+                Svg.Attributes.class "far"
 
-            AutoCounterEncounter counter ->
-                Html.map AutoCounterMsg (AutoCounter.view counter)
+        viewElement : ( Point, RenderElement ) -> ( String, Svg Msg )
+        viewElement ( pos, el ) =
+            case el of
+                EntityElement id entity ->
+                    ( String.fromInt id
+                    , viewEntity [ distanceClass pos ] ( id, entity )
+                    )
 
-            CombatEncounter combat ->
-                Html.map CombatMsg (viewCombat player combat)
-
-            Debug ->
-                Html.map DebugMsg Encounters.Debug.view
-        ]
+                TileElement height tile ->
+                    ( Point.toString pos
+                    , viewTile [ distanceClass pos ] height ( pos, tile )
+                    )
+    in
+    Svg.Keyed.node "g" [] (allElements |> List.map viewElement)
 
 
 view : Model -> Html Msg
@@ -302,7 +250,19 @@ view model =
     main_
         [ Html.Attributes.id "game"
         ]
-        [ Map.view (viewEncounter model.player) model.map
+        [ Render.svg []
+            [ Render.pointCamera [ Svg.Attributes.class "camera" ]
+                [ Svg.Lazy.lazy2 viewGrid model.map model.entities
+
+                --     (model.map
+                --         |> Dict.toList
+                --         |> List.sortBy (\( pos, _ ) -> Render.pointToPixel pos |> Tuple.second)
+                --         |> List.map viewTile
+                --     )
+                -- , Svg.g [] (model.entities |> Dict.toList |> List.map viewEntity)
+                ]
+                model.cameraPosition
+            ]
         ]
 
 
@@ -312,45 +272,7 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.batch
-        [ Browser.Events.onAnimationFrameDelta Tick
-        , Browser.Events.onKeyDown directionDecoder
-        ]
-
-
-directionDecoder : Decoder Msg
-directionDecoder =
-    Decode.field "key" Decode.string
-        |> Decode.andThen
-            (\key ->
-                case key of
-                    "w" ->
-                        Decode.succeed (ClickedMoveMap North)
-
-                    "ArrowUp" ->
-                        Decode.succeed (ClickedMoveMap North)
-
-                    "s" ->
-                        Decode.succeed (ClickedMoveMap South)
-
-                    "ArrowDown" ->
-                        Decode.succeed (ClickedMoveMap South)
-
-                    "a" ->
-                        Decode.succeed (ClickedMoveMap West)
-
-                    "ArrowLeft" ->
-                        Decode.succeed (ClickedMoveMap West)
-
-                    "d" ->
-                        Decode.succeed (ClickedMoveMap East)
-
-                    "ArrowRight" ->
-                        Decode.succeed (ClickedMoveMap East)
-
-                    _ ->
-                        Decode.fail "unknown key"
-            )
+    Browser.Events.onAnimationFrameDelta Tick
 
 
 
