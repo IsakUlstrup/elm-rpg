@@ -23,7 +23,8 @@ import Svg.Lazy
 
 
 type alias Tile =
-    { hue : Int
+    { level : Float
+    , hue : Int
     }
 
 
@@ -64,7 +65,7 @@ initTiles =
         |> List.indexedMap
             (\index pos ->
                 ( pos
-                , ( index |> modBy 3, index * 20 |> modBy 360 |> Tile )
+                , ( index |> modBy 3, index * 20 |> modBy 360 |> Tile 1 )
                 )
             )
         |> Dict.fromList
@@ -101,10 +102,29 @@ update msg model =
             , Cmd.none
             )
 
-        Tick _ ->
-            ( model
+        Tick dt ->
+            let
+                playerPos =
+                    Dict.get 0 model.entities
+                        |> Maybe.map .position
+                        |> Maybe.withDefault ( 0, 0 )
+            in
+            ( { model | map = Dict.map (tickTile playerPos dt) model.map }
             , Cmd.none
             )
+
+
+tickTile : Point -> Float -> Point -> ( Int, Tile ) -> ( Int, Tile )
+tickTile playerPos dt position ( height, tile ) =
+    let
+        rate =
+            0.003
+    in
+    if Point.distance position playerPos < 3 then
+        ( height, { tile | level = tile.level - (dt * rate) |> max 0 } )
+
+    else
+        ( height, { tile | level = tile.level + (dt * rate) |> min 1 } )
 
 
 
@@ -139,6 +159,9 @@ viewTile attrs height ( position, tile ) =
     let
         fillColor saturation =
             Svg.Attributes.fill ("hsl(" ++ String.fromInt tile.hue ++ ", " ++ String.fromInt saturation ++ "%, 75%)")
+
+        transform =
+            Svg.Attributes.transform ("translate(0, " ++ String.fromFloat (1500 * tile.level) ++ ")")
     in
     Svg.g
         ([ Render.hexHeightTransform height position
@@ -146,7 +169,10 @@ viewTile attrs height ( position, tile ) =
          ]
             ++ attrs
         )
-        [ Svg.g [ Svg.Attributes.class "tile-inner" ]
+        [ Svg.g
+            [ Svg.Attributes.class "tile-inner"
+            , transform
+            ]
             [ Svg.g [ fillColor 50 ]
                 [ Svg.rect
                     [ Svg.Attributes.x "-100"
