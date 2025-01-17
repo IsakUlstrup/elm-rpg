@@ -8,6 +8,6 @@ const map = urlParams.get('map')
 
 
 
-fetch(`public/${map}.json`)
+fetch(`${map}.json`)
     .then((response) => response.json())
     .then((json) => console.log(json));
