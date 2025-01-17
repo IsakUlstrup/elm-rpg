@@ -226,6 +226,18 @@ viewEntity attrs ( id, entity ) =
             ++ attrs
         )
         [ Render.viewHardcodedHex []
+        , Svg.image
+            [ Svg.Attributes.xlinkHref "https://opengameart.org/sites/default/files/styles/medium/public/pixel_character_spritesheet_preview1.png"
+
+            -- Image credit: https://opengameart.org/content/pixel-character-with-gun
+            , Svg.Attributes.width "300"
+            , Svg.Attributes.height "300"
+            , Svg.Attributes.x "-150"
+            , Svg.Attributes.y "-190"
+            ]
+            []
+
+        -- <image href="mdn_logo_only_color.png" height="200" width="200" />
         ]
 
 
