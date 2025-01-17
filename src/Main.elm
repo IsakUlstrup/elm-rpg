@@ -275,7 +275,7 @@ viewGrid tiles entities =
             case el of
                 EntityElement id entity ->
                     ( String.fromInt id
-                    , viewEntity [] ( id, entity )
+                    , viewEntity [ Svg.Attributes.pointerEvents "none" ] ( id, entity )
                     )
 
                 TileElement height tile ->
