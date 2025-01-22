@@ -229,8 +229,8 @@ pointCamera attrs children position =
 
 {-| Camera element
 -}
-pointHeightCamera : List (Attribute msg) -> List (Svg msg) -> Point -> Int -> Svg msg
-pointHeightCamera attrs children position height =
+pointHeightCamera : List (Attribute msg) -> List (Svg msg) -> Point -> Int -> Float -> Svg msg
+pointHeightCamera attrs children position height zoom =
     let
         ( x, y ) =
             pointToPixel position
@@ -242,7 +242,9 @@ pointHeightCamera attrs children position height =
                     ++ String.fromInt -(round x)
                     ++ "px, "
                     ++ String.fromInt -(y - (toFloat height * stepSize) |> round)
-                    ++ "px)"
+                    ++ "px) scale("
+                    ++ String.fromFloat zoom
+                    ++ ")"
                 )
     in
     Svg.g (cameraTransform :: attrs) children

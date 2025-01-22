@@ -5,6 +5,7 @@ module Engine.Point exposing
     , distance
     , isValid
     , neighbours
+    , square
     , subtract
     , toString
     )
@@ -160,3 +161,16 @@ circle : Int -> Point -> List Point
 circle radius center =
     List.range 0 radius
         |> List.concatMap (ring center)
+
+
+square : Int -> Point -> List Point
+square size center =
+    List.range 0 (size - 1)
+        |> List.concatMap
+            (\r ->
+                List.range 0 (size - 1)
+                    |> List.map
+                        (\q ->
+                            add center ( q, r )
+                        )
+            )

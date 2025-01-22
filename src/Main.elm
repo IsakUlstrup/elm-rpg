@@ -24,6 +24,16 @@ renderDistance =
     4
 
 
+zoom : Float
+zoom =
+    1
+
+
+chunkSize : Int
+chunkSize =
+    3
+
+
 
 -- TILE
 -- TODO: Add height
@@ -71,7 +81,20 @@ type alias Model =
 
 initTiles : Dict Point ( Int, Tile )
 initTiles =
-    Point.circle 10 ( 0, 0 )
+    (Point.square 50 ( 0, -chunkSize )
+     -- ++ Point.square chunkSize ( 0, 0 )
+     -- ++ Point.square chunkSize ( 0, 1 * chunkSize )
+     -- ++ Point.square chunkSize ( 2 * chunkSize, 0 )
+     -- ++ Point.square chunkSize ( -2 * chunkSize, 0 )
+     -- ++ Point.square chunkSize ( 2 * chunkSize, 1 * chunkSize )
+     -- ++ Point.square chunkSize ( -chunkSize, 0 )
+     -- ++ Point.square chunkSize ( 0, chunkSize )
+     -- ++ Point.square chunkSize ( 0, -chunkSize )
+     -- -- ++ Point.square chunkSize ( chunkSize, chunkSize )
+     -- ++ Point.square chunkSize ( chunkSize, -chunkSize )
+     -- -- ++ Point.square chunkSize ( -chunkSize, -chunkSize )
+     -- ++ Point.square chunkSize ( -chunkSize, chunkSize )
+    )
         |> List.indexedMap
             (\index pos ->
                 ( pos
@@ -166,11 +189,24 @@ tickTile playerPos dt position ( height, tile ) =
 --         ]
 
 
+pointToChunk : Point -> Point
+pointToChunk ( q, r ) =
+    ( toFloat q / toFloat chunkSize |> floor
+    , toFloat r / toFloat chunkSize |> floor
+    )
+
+
 viewTile : List (Svg.Attribute Msg) -> Int -> ( Point, Tile ) -> Svg Msg
 viewTile attrs height ( position, tile ) =
     let
+        hue =
+            Tuple.first chunkPos * Tuple.second chunkPos |> (*) 100
+
+        chunkPos =
+            pointToChunk position
+
         fillColor saturation level =
-            Svg.Attributes.fill ("hsl(" ++ String.fromInt tile.hue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
+            Svg.Attributes.fill ("hsl(" ++ String.fromInt hue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
 
         transform =
             Svg.Attributes.transform ("translate(0, " ++ String.fromFloat (1500 * tile.level) ++ ")")
@@ -205,14 +241,21 @@ viewTile attrs height ( position, tile ) =
                 [ fillColor 75 75
                 , Svg.Events.onClick (ClickedTile height position)
                 ]
-
-            -- , Svg.text_
-            --     [ Svg.Attributes.stroke "none"
-            --     , Svg.Attributes.fill "black"
-            --     , Svg.Attributes.textAnchor "middle"
-            --     , Svg.Attributes.pointerEvents "none"
-            --     ]
-            --     [ Svg.text (Point.toString position) ]
+            , Svg.text_
+                [ Svg.Attributes.stroke "none"
+                , Svg.Attributes.fill "black"
+                , Svg.Attributes.textAnchor "middle"
+                , Svg.Attributes.pointerEvents "none"
+                ]
+                [ Svg.text (Point.toString position) ]
+            , Svg.text_
+                [ Svg.Attributes.stroke "none"
+                , Svg.Attributes.fill "black"
+                , Svg.Attributes.textAnchor "middle"
+                , Svg.Attributes.pointerEvents "none"
+                , Svg.Attributes.y "30"
+                ]
+                [ Svg.text (Point.toString chunkPos) ]
             ]
         ]
 
@@ -226,16 +269,16 @@ viewEntity attrs ( id, entity ) =
             ++ attrs
         )
         [ Render.viewHardcodedHex []
-        , Svg.image
-            [ Svg.Attributes.xlinkHref "character.png"
-            , Svg.Attributes.class "sprite"
-            , Svg.Attributes.width "200"
-            , Svg.Attributes.height "200"
-            , Svg.Attributes.x "-100"
-            , Svg.Attributes.y "-180"
-            ]
-            []
 
+        -- , Svg.image
+        --     [ Svg.Attributes.xlinkHref "character.png"
+        --     , Svg.Attributes.class "sprite"
+        --     , Svg.Attributes.width "200"
+        --     , Svg.Attributes.height "200"
+        --     , Svg.Attributes.x "-100"
+        --     , Svg.Attributes.y "-180"
+        --     ]
+        --     []
         -- <image href="mdn_logo_only_color.png" height="200" width="200" />
         ]
 
@@ -303,6 +346,7 @@ view model =
                 ]
                 model.cameraPosition
                 model.cameraHeight
+                zoom
             ]
         ]
 
