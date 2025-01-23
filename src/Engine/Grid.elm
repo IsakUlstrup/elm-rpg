@@ -62,9 +62,34 @@ insert position tile (Grid grid) =
         |> Grid
 
 
+insertNoReplace : Point -> a -> Grid a -> Grid a
+insertNoReplace position tile (Grid grid) =
+    let
+        chunkPos =
+            pointToChunk position
+    in
+    (case Dict.get chunkPos grid of
+        Just chunk ->
+            let
+                insertHelper pos t c =
+                    case Dict.get pos c of
+                        Just _ ->
+                            c
+
+                        Nothing ->
+                            Dict.insert pos t c
+            in
+            Dict.insert chunkPos (insertHelper position tile chunk) grid
+
+        Nothing ->
+            Dict.insert chunkPos (Dict.singleton position tile) grid
+    )
+        |> Grid
+
+
 insertList : List ( Point, a ) -> Grid a -> Grid a
 insertList tiles grid =
-    List.foldl (\( pos, tile ) g -> insert pos tile g) grid tiles
+    List.foldl (\( pos, tile ) g -> insertNoReplace pos tile g) grid tiles
 
 
 getTiles : Point -> Grid a -> List ( Point, a )
