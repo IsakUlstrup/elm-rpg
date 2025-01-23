@@ -189,7 +189,7 @@ viewTile : List (Svg.Attribute Msg) -> Int -> ( Point, Tile ) -> Svg Msg
 viewTile attrs height ( position, tile ) =
     let
         hue =
-            Tuple.first chunkPos * Tuple.second chunkPos |> (*) 100
+            Tuple.second chunkPos * Tuple.first chunkPos |> (*) 100
 
         chunkPos =
             pointToChunk position
@@ -275,13 +275,20 @@ viewEntity attrs ( id, entity ) =
 viewGrid : Grid ( Int, Tile ) -> Dict Int Entity -> Svg Msg
 viewGrid tiles entities =
     let
+        tileDistClass p =
+            if Point.distance playerPos p < 2 then
+                "close"
+
+            else
+                "far"
+
         playerPos =
             Dict.get 0 entities
                 |> Maybe.map .position
                 |> Maybe.withDefault ( 0, 0 )
 
         tileList =
-            tiles |> Grid.getTiles playerPos |> List.map (\( position, ( height, tile ) ) -> ( position, TileElement height tile ))
+            tiles |> Grid.getTilesRadius playerPos |> List.map (\( position, ( height, tile ) ) -> ( position, TileElement height tile ))
 
         entityList =
             entities |> Dict.toList |> List.map (\( id, entity ) -> ( entity.position, EntityElement id entity ))
@@ -310,7 +317,7 @@ viewGrid tiles entities =
 
                 TileElement height tile ->
                     ( Point.toString pos
-                    , viewTile [] height ( pos, tile )
+                    , viewTile [ Svg.Attributes.class (tileDistClass pos) ] height ( pos, tile )
                     )
     in
     Svg.Keyed.node "g" [] (allElements |> List.map viewElement)
