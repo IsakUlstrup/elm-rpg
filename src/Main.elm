@@ -21,7 +21,7 @@ import Svg.Lazy
 
 renderDistance : Int
 renderDistance =
-    4
+    5
 
 
 zoom : Float
@@ -269,16 +269,16 @@ viewEntity attrs ( id, entity ) =
             ++ attrs
         )
         [ Render.viewHardcodedHex []
+        , Svg.image
+            [ Svg.Attributes.xlinkHref "character.png"
+            , Svg.Attributes.class "sprite"
+            , Svg.Attributes.width "200"
+            , Svg.Attributes.height "200"
+            , Svg.Attributes.x "-100"
+            , Svg.Attributes.y "-180"
+            ]
+            []
 
-        -- , Svg.image
-        --     [ Svg.Attributes.xlinkHref "character.png"
-        --     , Svg.Attributes.class "sprite"
-        --     , Svg.Attributes.width "200"
-        --     , Svg.Attributes.height "200"
-        --     , Svg.Attributes.x "-100"
-        --     , Svg.Attributes.y "-180"
-        --     ]
-        --     []
         -- <image href="mdn_logo_only_color.png" height="200" width="200" />
         ]
 
