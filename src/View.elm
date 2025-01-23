@@ -1,4 +1,4 @@
-module View exposing (..)
+module View exposing (viewTrailMeter)
 
 import Html exposing (Html)
 import Html.Attributes

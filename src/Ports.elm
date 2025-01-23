@@ -1,4 +1,4 @@
-port module Ports exposing (..)
+port module Ports exposing (gotChunk, requestChunk)
 
 import ChunkType exposing (ChunkType)
 

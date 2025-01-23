@@ -1,4 +1,4 @@
-module ChunkType exposing (..)
+module ChunkType exposing (ChunkType)
 
 
 type alias ChunkType =
