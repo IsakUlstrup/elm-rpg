@@ -2,12 +2,14 @@ module Main exposing (Model, Msg, main)
 
 import Browser
 import Browser.Events
+import ChunkType exposing (ChunkType)
 import Dict exposing (Dict)
 import Engine.Grid as Grid exposing (Grid)
 import Engine.Point as Point exposing (Point)
 import Engine.Render as Render
 import Html exposing (Html, main_)
 import Html.Attributes
+import Ports
 import Random
 import Svg exposing (Svg)
 import Svg.Attributes
@@ -28,11 +30,6 @@ renderDistance =
 zoom : Float
 zoom =
     1
-
-
-chunkSize : Int
-chunkSize =
-    3
 
 
 
@@ -78,29 +75,28 @@ type alias Model =
     }
 
 
-initTiles : Grid ( Int, Tile )
-initTiles =
-    Point.square 100 ( 0, -chunkSize )
-        |> List.indexedMap
-            (\index pos ->
-                ( pos
-                , ( index |> modBy 3, index * 20 |> modBy 360 |> Tile 1 )
-                )
-            )
-        |> Grid.fromList
-
-
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
         (Random.initialSeed 32)
-        initTiles
+        Grid.empty
         ( 0, 0 )
         (Dict.singleton 0 (Entity ( 0, 0 ) 0))
         ( 0, 0 )
         0
-    , Cmd.none
+    , requestNeighbourChunks ( 0, 0 )
     )
+
+
+requestNeighbourChunks : Point -> Cmd Msg
+requestNeighbourChunks position =
+    let
+        chunkPosition =
+            Grid.pointToChunk position
+    in
+    Point.neighbours chunkPosition
+        |> List.map (Point.toString >> Ports.requestChunk)
+        |> Cmd.batch
 
 
 
@@ -110,6 +106,7 @@ init _ =
 type Msg
     = ClickedTile Int Point
     | Tick Float
+    | GotChunk (List ChunkType)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -139,13 +136,29 @@ update msg model =
                     | lastChunk = chunkPosition
                     , map = Grid.updateNeighbours (tickTile playerPos dt) model.cameraPosition model.map
                   }
-                , Cmd.none
+                , requestNeighbourChunks chunkPosition
                 )
 
             else
                 ( { model | map = Grid.updateNeighbours (tickTile playerPos dt) model.cameraPosition model.map }
                 , Cmd.none
                 )
+
+        GotChunk data ->
+            let
+                -- _ =
+                --     Debug.log "got chunk" data
+                formatedTiles : List ( Point, ( Int, Tile ) )
+                formatedTiles =
+                    data
+                        |> List.map
+                            (\remoteTile ->
+                                ( ( remoteTile.q, remoteTile.r )
+                                , ( remoteTile.height, Tile 1 remoteTile.hue )
+                                )
+                            )
+            in
+            ( { model | map = Grid.insertList formatedTiles model.map }, Cmd.none )
 
 
 tickTile : Point -> Float -> Point -> ( Int, Tile ) -> ( Int, Tile )
@@ -163,49 +176,16 @@ tickTile playerPos dt position ( height, tile ) =
 
 
 -- VIEW
--- viewTrailMeter : Meter -> Html msg
--- viewTrailMeter meter =
---     let
---         ( trailDelay, valueDelay ) =
---             if meter.headingDown then
---                 ( 200, 0 )
---             else
---                 ( 0, 200 )
---     in
---     Html.div [ Html.Attributes.class "meter" ]
---         [ Html.div
---             [ Html.Attributes.class "trail"
---             , Html.Attributes.style "width" (String.fromInt (filledPercentage meter) ++ "%")
---             , Html.Attributes.style "transition-delay" (String.fromInt trailDelay ++ "ms")
---             ]
---             []
---         , Html.div
---             [ Html.Attributes.class "value"
---             , Html.Attributes.style "width" (String.fromInt (filledPercentage meter) ++ "%")
---             , Html.Attributes.style "transition-delay" (String.fromInt valueDelay ++ "ms")
---             ]
---             []
---         ]
-
-
-pointToChunk : Point -> Point
-pointToChunk ( q, r ) =
-    ( toFloat q / toFloat chunkSize |> floor
-    , toFloat r / toFloat chunkSize |> floor
-    )
 
 
 viewTile : List (Svg.Attribute Msg) -> Int -> ( Point, Tile ) -> Svg Msg
 viewTile attrs height ( position, tile ) =
     let
-        hue =
-            Tuple.second chunkPos * Tuple.first chunkPos |> (*) 100
-
         chunkPos =
-            pointToChunk position
+            Grid.pointToChunk position
 
         fillColor saturation level =
-            Svg.Attributes.fill ("hsl(" ++ String.fromInt hue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
+            Svg.Attributes.fill ("hsl(" ++ String.fromInt tile.hue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
 
         transform =
             Svg.Attributes.transform ("translate(0, " ++ String.fromFloat (2000 * tile.level) ++ ")")
@@ -355,7 +335,10 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Browser.Events.onAnimationFrameDelta Tick
+    Sub.batch
+        [ Browser.Events.onAnimationFrameDelta Tick
+        , Ports.gotChunk GotChunk
+        ]
 
 
 

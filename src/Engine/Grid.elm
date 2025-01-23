@@ -5,6 +5,7 @@ module Engine.Grid exposing
     , getTiles
     , getTilesRadius
     , insert
+    , insertList
     , map
     , pointToChunk
     , updateNeighbours
@@ -59,6 +60,11 @@ insert position tile (Grid grid) =
             Dict.insert chunkPos (Dict.singleton position tile) grid
     )
         |> Grid
+
+
+insertList : List ( Point, a ) -> Grid a -> Grid a
+insertList tiles grid =
+    List.foldl (\( pos, tile ) g -> insert pos tile g) grid tiles
 
 
 getTiles : Point -> Grid a -> List ( Point, a )

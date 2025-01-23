@@ -1,13 +1,13 @@
 import { Elm } from "./src/Main.elm";
-Elm.Main.init({ node: document.getElementById("app") });
 
+const app = Elm.Main.init({ node: document.getElementById("app") });
 
-const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-const map = urlParams.get('map')
-
-
-
-fetch(`${map}.json`)
-    .then((response) => response.json())
-    .then((json) => console.log(json));
+app.ports.requestChunk.subscribe(function (chunk) {
+    // console.log("request chunk:", chunk);
+    fetch(`map/${chunk}.json`)
+        .then((response) => response.json())
+        .then((json) => {
+            console.log("sending chunk", chunk, json);
+            app.ports.gotChunk.send(json);
+        });
+});
