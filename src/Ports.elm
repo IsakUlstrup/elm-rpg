@@ -1,9 +1,9 @@
 port module Ports exposing (gotChunk, requestChunk)
 
-import ChunkType exposing (ChunkType)
+import RemoteData exposing (Chunk)
 
 
 port requestChunk : String -> Cmd msg
 
 
-port gotChunk : (List ChunkType -> msg) -> Sub msg
+port gotChunk : (Chunk -> msg) -> Sub msg

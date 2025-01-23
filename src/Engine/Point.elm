@@ -5,6 +5,7 @@ module Engine.Point exposing
     , distance
     , isValid
     , neighbours
+    , scale
     , square
     , subtract
     , toString

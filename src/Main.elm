@@ -2,7 +2,6 @@ module Main exposing (Model, Msg, main)
 
 import Browser
 import Browser.Events
-import ChunkType exposing (ChunkType)
 import Dict exposing (Dict)
 import Engine.Grid as Grid exposing (Grid)
 import Engine.Point as Point exposing (Point)
@@ -11,6 +10,7 @@ import Html exposing (Html, main_)
 import Html.Attributes
 import Ports
 import Random
+import RemoteData
 import Svg exposing (Svg)
 import Svg.Attributes
 import Svg.Events
@@ -94,7 +94,7 @@ requestNeighbourChunks position =
         chunkPosition =
             Grid.pointToChunk position
     in
-    Point.neighbours chunkPosition
+    (chunkPosition :: Point.neighbours chunkPosition)
         |> List.map (Point.toString >> Ports.requestChunk)
         |> Cmd.batch
 
@@ -106,7 +106,7 @@ requestNeighbourChunks position =
 type Msg
     = ClickedTile Int Point
     | Tick Float
-    | GotChunk (List ChunkType)
+    | GotChunk RemoteData.Chunk
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -144,16 +144,16 @@ update msg model =
                 , Cmd.none
                 )
 
-        GotChunk data ->
+        GotChunk chunk ->
             let
                 -- _ =
                 --     Debug.log "got chunk" data
                 formatedTiles : List ( Point, ( Int, Tile ) )
                 formatedTiles =
-                    data
+                    chunk.tiles
                         |> List.map
                             (\remoteTile ->
-                                ( ( remoteTile.q, remoteTile.r )
+                                ( ( remoteTile.q, remoteTile.r ) |> Point.add (Point.scale Grid.chunkSize ( chunk.q, chunk.r ))
                                 , ( remoteTile.height, Tile 1 remoteTile.hue )
                                 )
                             )

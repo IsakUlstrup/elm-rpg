@@ -1,5 +1,6 @@
 module Engine.Grid exposing
     ( Grid
+    , chunkSize
     , empty
     , fromList
     , getTiles
