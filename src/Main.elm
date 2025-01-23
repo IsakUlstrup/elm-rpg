@@ -22,7 +22,7 @@ import Svg.Lazy
 
 renderDistance : Int
 renderDistance =
-    5
+    4
 
 
 zoom : Float
@@ -37,9 +37,6 @@ chunkSize =
 
 
 -- TILE
--- TODO: Add height
--- TODO: Add animation state
--- TODO: Add state wrapper
 
 
 type alias Tile =
@@ -86,7 +83,7 @@ initTiles =
         |> List.indexedMap
             (\index pos ->
                 ( pos
-                , ( index |> modBy 3, index * 20 |> modBy 360 |> Tile 0 )
+                , ( index |> modBy 3, index * 20 |> modBy 360 |> Tile 1 )
                 )
             )
         |> Grid.fromList
@@ -126,14 +123,13 @@ update msg model =
             )
 
         Tick dt ->
-            -- let
-            --     playerPos =
-            --         Dict.get 0 model.entities
-            --             |> Maybe.map .position
-            --             |> Maybe.withDefault ( 0, 0 )
-            -- in
-            ( -- { model | map = Grid.map (tickTile playerPos dt) model.map }
-              model
+            let
+                playerPos =
+                    Dict.get 0 model.entities
+                        |> Maybe.map .position
+                        |> Maybe.withDefault ( 0, 0 )
+            in
+            ( { model | map = Grid.updateNeighbours (tickTile playerPos dt) model.cameraPosition model.map }
             , Cmd.none
             )
 
@@ -198,7 +194,7 @@ viewTile attrs height ( position, tile ) =
             Svg.Attributes.fill ("hsl(" ++ String.fromInt hue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
 
         transform =
-            Svg.Attributes.transform ("translate(0, " ++ String.fromFloat (1500 * tile.level) ++ ")")
+            Svg.Attributes.transform ("translate(0, " ++ String.fromFloat (2000 * tile.level) ++ ")")
     in
     Svg.g
         ([ Render.hexHeightTransform height position
@@ -297,16 +293,16 @@ viewGrid tiles entities =
         allElements =
             tileList
                 ++ entityList
+                |> List.sortBy
+                    (\( _, tile ) ->
+                        case tile of
+                            EntityElement _ _ ->
+                                0.1
 
-        -- |> List.filter (\( point, _ ) -> Point.distance point playerPos < (renderDistance + 1))
-        -- |> List.sortBy
-        --     (\( pos, tile ) ->
-        --         case tile of
-        --             EntityElement _ _ ->
-        --                 Render.pointToPixel pos |> Tuple.second |> (+) 0.1
-        --             TileElement _ _ ->
-        --                 Render.pointToPixel pos |> Tuple.second
-        --     )
+                            TileElement _ _ ->
+                                0
+                    )
+
         viewElement : ( Point, RenderElement ) -> ( String, Svg Msg )
         viewElement ( pos, el ) =
             case el of
@@ -331,13 +327,6 @@ view model =
         [ Render.svg [ Svg.Attributes.class "game-svg" ]
             [ Render.pointHeightCamera [ Svg.Attributes.class "camera" ]
                 [ Svg.Lazy.lazy2 viewGrid model.map model.entities
-
-                --     (model.map
-                --         |> Dict.toList
-                --         |> List.sortBy (\( pos, _ ) -> Render.pointToPixel pos |> Tuple.second)
-                --         |> List.map viewTile
-                --     )
-                -- , Svg.g [] (model.entities |> Dict.toList |> List.map viewEntity)
                 ]
                 model.cameraPosition
                 model.cameraHeight

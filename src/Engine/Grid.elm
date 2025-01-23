@@ -6,6 +6,7 @@ module Engine.Grid exposing
     , getTilesRadius
     , insert
     , map
+    , updateNeighbours
     )
 
 import Dict exposing (Dict)
@@ -99,6 +100,24 @@ getTilesRadius position (Grid grid) =
 map : (Point -> a -> v) -> Grid a -> Grid v
 map f (Grid grid) =
     grid |> Dict.map (\_ chunk -> Dict.map f chunk) |> Grid
+
+
+updateNeighbours : (Point -> a -> a) -> Point -> Grid a -> Grid a
+updateNeighbours f position (Grid grid) =
+    let
+        chunkPos =
+            pointToChunk position
+
+        chunks =
+            chunkPos :: Point.neighbours chunkPos
+    in
+    chunks
+        |> List.foldl
+            (\neighbour g ->
+                Dict.update neighbour (Maybe.map (Dict.map f)) g
+            )
+            grid
+        |> Grid
 
 
 pointToChunk : Point -> Point

@@ -86,19 +86,9 @@ pointToPixel ( q, r ) =
         )
 
     else
-        ( hexSize * (3 / 2 * toFloat q)
-        , hexSize * (sqrt 3 / 2 * toFloat q + sqrt 3 * toFloat r)
+        ( hexSize * (3 / 2 * toFloat r)
+        , hexSize * (sqrt 3 / 2 * toFloat r + sqrt 3 * toFloat q)
         )
-
-
-
--- {-| Get the center of a given point in screen coordinates. Ignores hex size
--- -}
--- pointToPixelAbs : Point -> ( Float, Float )
--- pointToPixelAbs ( q, r ) =
---     ( 3 / 2 * toFloat q
---     , sqrt 3 / 2 * toFloat q + sqrt 3 * toFloat r
---     )
 
 
 {-| Convert a list of floats to a Svg points attribute
