@@ -6,6 +6,7 @@ module Engine.Grid exposing
     , getTilesRadius
     , insert
     , map
+    , pointToChunk
     , updateNeighbours
     )
 

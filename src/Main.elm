@@ -71,6 +71,7 @@ type RenderElement
 type alias Model =
     { seed : Random.Seed
     , map : Grid ( Int, Tile )
+    , lastChunk : Point
     , entities : Dict Int Entity
     , cameraPosition : Point
     , cameraHeight : Int
@@ -94,6 +95,7 @@ init _ =
     ( Model
         (Random.initialSeed 32)
         initTiles
+        ( 0, 0 )
         (Dict.singleton 0 (Entity ( 0, 0 ) 0))
         ( 0, 0 )
         0
@@ -128,10 +130,22 @@ update msg model =
                     Dict.get 0 model.entities
                         |> Maybe.map .position
                         |> Maybe.withDefault ( 0, 0 )
+
+                chunkPosition =
+                    Grid.pointToChunk playerPos
             in
-            ( { model | map = Grid.updateNeighbours (tickTile playerPos dt) model.cameraPosition model.map }
-            , Cmd.none
-            )
+            if chunkPosition /= model.lastChunk then
+                ( { model
+                    | lastChunk = chunkPosition
+                    , map = Grid.updateNeighbours (tickTile playerPos dt) model.cameraPosition model.map
+                  }
+                , Cmd.none
+                )
+
+            else
+                ( { model | map = Grid.updateNeighbours (tickTile playerPos dt) model.cameraPosition model.map }
+                , Cmd.none
+                )
 
 
 tickTile : Point -> Float -> Point -> ( Int, Tile ) -> ( Int, Tile )
