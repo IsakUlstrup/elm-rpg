@@ -3,6 +3,7 @@ module Main exposing (Model, Msg, main)
 import Browser
 import Browser.Events
 import Dict exposing (Dict)
+import Engine.Grid as Grid exposing (Grid)
 import Engine.Point as Point exposing (Point)
 import Engine.Render as Render
 import Html exposing (Html, main_)
@@ -72,36 +73,23 @@ type RenderElement
 
 type alias Model =
     { seed : Random.Seed
-    , map : Dict Point ( Int, Tile )
+    , map : Grid ( Int, Tile )
     , entities : Dict Int Entity
     , cameraPosition : Point
     , cameraHeight : Int
     }
 
 
-initTiles : Dict Point ( Int, Tile )
+initTiles : Grid ( Int, Tile )
 initTiles =
-    (Point.square 50 ( 0, -chunkSize )
-     -- ++ Point.square chunkSize ( 0, 0 )
-     -- ++ Point.square chunkSize ( 0, 1 * chunkSize )
-     -- ++ Point.square chunkSize ( 2 * chunkSize, 0 )
-     -- ++ Point.square chunkSize ( -2 * chunkSize, 0 )
-     -- ++ Point.square chunkSize ( 2 * chunkSize, 1 * chunkSize )
-     -- ++ Point.square chunkSize ( -chunkSize, 0 )
-     -- ++ Point.square chunkSize ( 0, chunkSize )
-     -- ++ Point.square chunkSize ( 0, -chunkSize )
-     -- -- ++ Point.square chunkSize ( chunkSize, chunkSize )
-     -- ++ Point.square chunkSize ( chunkSize, -chunkSize )
-     -- -- ++ Point.square chunkSize ( -chunkSize, -chunkSize )
-     -- ++ Point.square chunkSize ( -chunkSize, chunkSize )
-    )
+    Point.square 100 ( 0, -chunkSize )
         |> List.indexedMap
             (\index pos ->
                 ( pos
-                , ( index |> modBy 3, index * 20 |> modBy 360 |> Tile 1 )
+                , ( index |> modBy 3, index * 20 |> modBy 360 |> Tile 0 )
                 )
             )
-        |> Dict.fromList
+        |> Grid.fromList
 
 
 init : () -> ( Model, Cmd Msg )
@@ -138,13 +126,14 @@ update msg model =
             )
 
         Tick dt ->
-            let
-                playerPos =
-                    Dict.get 0 model.entities
-                        |> Maybe.map .position
-                        |> Maybe.withDefault ( 0, 0 )
-            in
-            ( { model | map = Dict.map (tickTile playerPos dt) model.map }
+            -- let
+            --     playerPos =
+            --         Dict.get 0 model.entities
+            --             |> Maybe.map .position
+            --             |> Maybe.withDefault ( 0, 0 )
+            -- in
+            ( -- { model | map = Grid.map (tickTile playerPos dt) model.map }
+              model
             , Cmd.none
             )
 
@@ -269,21 +258,21 @@ viewEntity attrs ( id, entity ) =
             ++ attrs
         )
         [ Render.viewHardcodedHex []
-        , Svg.image
-            [ Svg.Attributes.xlinkHref "character.png"
-            , Svg.Attributes.class "sprite"
-            , Svg.Attributes.width "200"
-            , Svg.Attributes.height "200"
-            , Svg.Attributes.x "-100"
-            , Svg.Attributes.y "-180"
-            ]
-            []
 
+        -- , Svg.image
+        --     [ Svg.Attributes.xlinkHref "character.png"
+        --     , Svg.Attributes.class "sprite"
+        --     , Svg.Attributes.width "200"
+        --     , Svg.Attributes.height "200"
+        --     , Svg.Attributes.x "-100"
+        --     , Svg.Attributes.y "-180"
+        --     ]
+        --     []
         -- <image href="mdn_logo_only_color.png" height="200" width="200" />
         ]
 
 
-viewGrid : Dict Point ( Int, Tile ) -> Dict Int Entity -> Svg Msg
+viewGrid : Grid ( Int, Tile ) -> Dict Int Entity -> Svg Msg
 viewGrid tiles entities =
     let
         playerPos =
@@ -292,7 +281,7 @@ viewGrid tiles entities =
                 |> Maybe.withDefault ( 0, 0 )
 
         tileList =
-            tiles |> Dict.toList |> List.map (\( position, ( height, tile ) ) -> ( position, TileElement height tile ))
+            tiles |> Grid.getTiles playerPos |> List.map (\( position, ( height, tile ) ) -> ( position, TileElement height tile ))
 
         entityList =
             entities |> Dict.toList |> List.map (\( id, entity ) -> ( entity.position, EntityElement id entity ))
@@ -301,17 +290,16 @@ viewGrid tiles entities =
         allElements =
             tileList
                 ++ entityList
-                |> List.filter (\( point, _ ) -> Point.distance point playerPos < (renderDistance + 1))
-                |> List.sortBy
-                    (\( pos, tile ) ->
-                        case tile of
-                            EntityElement _ _ ->
-                                Render.pointToPixel pos |> Tuple.second |> (+) 0.1
 
-                            TileElement _ _ ->
-                                Render.pointToPixel pos |> Tuple.second
-                    )
-
+        -- |> List.filter (\( point, _ ) -> Point.distance point playerPos < (renderDistance + 1))
+        -- |> List.sortBy
+        --     (\( pos, tile ) ->
+        --         case tile of
+        --             EntityElement _ _ ->
+        --                 Render.pointToPixel pos |> Tuple.second |> (+) 0.1
+        --             TileElement _ _ ->
+        --                 Render.pointToPixel pos |> Tuple.second
+        --     )
         viewElement : ( Point, RenderElement ) -> ( String, Svg Msg )
         viewElement ( pos, el ) =
             case el of
