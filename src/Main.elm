@@ -29,7 +29,7 @@ renderDistance =
 
 zoom : Float
 zoom =
-    1
+    0.7
 
 
 
