@@ -2,7 +2,6 @@ module Main exposing (Model, Msg, main)
 
 import Browser
 import Browser.Events
-import Dict exposing (Dict)
 import Engine.Grid as Grid exposing (Grid)
 import Engine.Point as Point exposing (Point)
 import Engine.Render as Render
@@ -22,11 +21,6 @@ import Svg.Lazy
 -- CONSTANTS
 
 
-renderDistance : Int
-renderDistance =
-    4
-
-
 zoom : Float
 zoom =
     0.7
@@ -37,9 +31,7 @@ zoom =
 
 
 type alias Tile =
-    { level : Float
-    , hue : Int
-    }
+    ()
 
 
 
@@ -69,7 +61,6 @@ type alias Model =
     { seed : Random.Seed
     , map : Grid ( Int, Tile )
     , lastChunk : Point
-    , entities : Dict Int Entity
     , cameraPosition : Point
     , cameraHeight : Int
     }
@@ -81,7 +72,6 @@ init _ =
         (Random.initialSeed 32)
         Grid.empty
         ( 0, 0 )
-        (Dict.singleton 0 (Entity ( 0, 0 ) 0))
         ( 0, 0 )
         0
     , requestNeighbourChunks ( 0, 0 )
@@ -116,31 +106,28 @@ update msg model =
             ( { model
                 | cameraPosition = position
                 , cameraHeight = height
-                , entities = Dict.update 0 (Maybe.map (\e -> { e | position = position, height = height })) model.entities
+
+                -- , entities = Dict.update 0 (Maybe.map (\e -> { e | position = position, height = height })) model.entities
               }
             , Cmd.none
             )
 
-        Tick dt ->
+        Tick _ ->
             let
-                playerPos =
-                    Dict.get 0 model.entities
-                        |> Maybe.map .position
-                        |> Maybe.withDefault ( 0, 0 )
-
                 chunkPosition =
-                    Grid.pointToChunk playerPos
+                    Grid.pointToChunk model.cameraPosition
             in
             if chunkPosition /= model.lastChunk then
                 ( { model
                     | lastChunk = chunkPosition
-                    , map = Grid.updateNeighbours (tickTile playerPos dt) model.cameraPosition model.map
+
+                    -- , map = Grid.updateNeighbours (tickTile playerPos dt) model.cameraPosition model.map
                   }
                 , requestNeighbourChunks chunkPosition
                 )
 
             else
-                ( { model | map = Grid.updateNeighbours (tickTile playerPos dt) model.cameraPosition model.map }
+                ( model
                 , Cmd.none
                 )
 
@@ -154,24 +141,11 @@ update msg model =
                         |> List.map
                             (\remoteTile ->
                                 ( ( remoteTile.q, remoteTile.r ) |> Point.add (Point.scale Grid.chunkSize ( chunk.q, chunk.r ))
-                                , ( remoteTile.height, Tile 1 remoteTile.hue )
+                                , ( remoteTile.height, () )
                                 )
                             )
             in
             ( { model | map = Grid.insertList formatedTiles model.map }, Cmd.none )
-
-
-tickTile : Point -> Float -> Point -> ( Int, Tile ) -> ( Int, Tile )
-tickTile playerPos dt position ( height, tile ) =
-    let
-        rate =
-            0.002
-    in
-    if Point.distance position playerPos < renderDistance then
-        ( height, { tile | level = tile.level - (dt * rate) |> max 0 } )
-
-    else
-        ( height, { tile | level = tile.level + (dt * rate) |> min 1 } )
 
 
 
@@ -184,11 +158,11 @@ viewTile attrs height ( position, tile ) =
         chunkPos =
             Grid.pointToChunk position
 
-        fillColor saturation level =
-            Svg.Attributes.fill ("hsl(" ++ String.fromInt tile.hue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
+        tileHue =
+            (Tuple.first chunkPos |> toFloat) + (Tuple.second chunkPos |> toFloat) * 100
 
-        transform =
-            Svg.Attributes.transform ("translate(0, " ++ String.fromFloat (2000 * tile.level) ++ ")")
+        fillColor saturation level =
+            Svg.Attributes.fill ("hsl(" ++ String.fromFloat tileHue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
     in
     Svg.g
         ([ Render.hexHeightTransform height position
@@ -198,25 +172,26 @@ viewTile attrs height ( position, tile ) =
         )
         [ Svg.g
             [ Svg.Attributes.class "tile-inner"
-            , transform
+
+            -- , transform
             ]
-            [ Svg.g [ fillColor 75 80 ]
-                [ Svg.rect
-                    [ Svg.Attributes.x "-100"
-                    , Svg.Attributes.y "0"
-                    , Svg.Attributes.width "200"
-                    , Svg.Attributes.height "5000"
-                    ]
-                    []
-                , Svg.rect
-                    [ Svg.Attributes.x "-50"
-                    , Svg.Attributes.y "0"
-                    , Svg.Attributes.width "100"
-                    , Svg.Attributes.height "5000"
-                    ]
-                    []
-                ]
-            , Render.viewHardcodedHex
+            [ -- Svg.g [ fillColor 75 80 ]
+              -- [ Svg.rect
+              --     [ Svg.Attributes.x "-100"
+              --     , Svg.Attributes.y "0"
+              --     , Svg.Attributes.width "200"
+              --     , Svg.Attributes.height "5000"
+              --     ]
+              --     []
+              -- , Svg.rect
+              --     [ Svg.Attributes.x "-50"
+              --     , Svg.Attributes.y "0"
+              --     , Svg.Attributes.width "100"
+              --     , Svg.Attributes.height "5000"
+              --     ]
+              --     []
+              -- ]
+              Render.viewHardcodedHex
                 [ fillColor 75 75
                 , Svg.Events.onClick (ClickedTile height position)
                 ]
@@ -262,41 +237,36 @@ viewEntity attrs ( id, entity ) =
         ]
 
 
-viewGrid : Grid ( Int, Tile ) -> Dict Int Entity -> Svg Msg
-viewGrid tiles entities =
+viewGrid : Point -> Grid ( Int, Tile ) -> Svg Msg
+viewGrid playerPos tiles =
     let
-        tileDistClass p =
-            if Point.distance playerPos p < 2 then
-                "close"
-
-            else
-                "far"
-
-        playerPos =
-            Dict.get 0 entities
-                |> Maybe.map .position
-                |> Maybe.withDefault ( 0, 0 )
-
+        -- tileDistClass p =
+        --     if Point.distance playerPos p < 2 then
+        --         "close"
+        --     else
+        --         "far"
+        -- playerPos =
+        --     Dict.get 0 entities
+        --         |> Maybe.map .position
+        --         |> Maybe.withDefault ( 0, 0 )
         tileList =
             tiles |> Grid.getTilesRadius playerPos |> List.map (\( position, ( height, tile ) ) -> ( position, TileElement height tile ))
 
-        entityList =
-            entities |> Dict.toList |> List.map (\( id, entity ) -> ( entity.position, EntityElement id entity ))
-
+        -- entityList =
+        --     entities |> Dict.toList |> List.map (\( id, entity ) -> ( entity.position, EntityElement id entity ))
         allElements : List ( Point, RenderElement )
         allElements =
             tileList
-                ++ entityList
-                |> List.sortBy
-                    (\( _, tile ) ->
-                        case tile of
-                            EntityElement _ _ ->
-                                0.1
 
-                            TileElement _ _ ->
-                                0
-                    )
-
+        -- ++ entityList
+        -- |> List.sortBy
+        --     (\( _, tile ) ->
+        --         case tile of
+        --             EntityElement _ _ ->
+        --                 0.1
+        --             TileElement _ _ ->
+        --                 0
+        --     )
         viewElement : ( Point, RenderElement ) -> ( String, Svg Msg )
         viewElement ( pos, el ) =
             case el of
@@ -307,7 +277,7 @@ viewGrid tiles entities =
 
                 TileElement height tile ->
                     ( Point.toString pos
-                    , viewTile [ Svg.Attributes.class (tileDistClass pos) ] height ( pos, tile )
+                    , viewTile [] height ( pos, tile )
                     )
     in
     Svg.Keyed.node "g" [] (allElements |> List.map viewElement)
@@ -320,7 +290,7 @@ view model =
         ]
         [ Render.svg [ Svg.Attributes.class "game-svg" ]
             [ Render.pointHeightCamera [ Svg.Attributes.class "camera" ]
-                [ Svg.Lazy.lazy2 viewGrid model.map model.entities
+                [ Svg.Lazy.lazy2 viewGrid model.cameraPosition model.map
                 ]
                 model.cameraPosition
                 model.cameraHeight
