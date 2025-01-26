@@ -1,13 +1,15 @@
 port module Ports exposing (Chunk, gotChunk, requestChunk)
 
+import Engine.Point exposing (Point)
 
-port requestChunk : String -> Cmd msg
+
+port requestChunk : Point -> Cmd msg
 
 
 type alias Chunk =
     { q : Int
     , r : Int
-    , tiles : List Tile
+    , tiles : Maybe (List Tile)
     }
 
 

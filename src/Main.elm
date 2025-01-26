@@ -84,7 +84,7 @@ requestNeighbourChunks position =
             Grid.pointToChunk position
     in
     (chunkPosition :: Point.neighbours chunkPosition)
-        |> List.map (Point.toString >> Ports.requestChunk)
+        |> List.map Ports.requestChunk
         |> Cmd.batch
 
 
@@ -131,20 +131,29 @@ update msg model =
                 )
 
         GotChunk chunk ->
-            let
-                -- _ =
-                --     Debug.log "got chunk" data
-                formatedTiles : List ( Point, ( Int, Tile ) )
-                formatedTiles =
-                    chunk.tiles
-                        |> List.map
-                            (\remoteTile ->
-                                ( ( remoteTile.q, remoteTile.r ) |> Point.add (Point.scale Grid.chunkSize ( chunk.q, chunk.r ))
-                                , ( remoteTile.height, () )
-                                )
-                            )
-            in
-            ( { model | map = Grid.insertList formatedTiles model.map }, Cmd.none )
+            case chunk.tiles of
+                Just tiles ->
+                    let
+                        -- _ =
+                        --     Debug.log "got chunk" data
+                        formatedTiles : List ( Point, ( Int, Tile ) )
+                        formatedTiles =
+                            tiles
+                                |> List.map
+                                    (\remoteTile ->
+                                        ( ( remoteTile.q, remoteTile.r ) |> Point.add (Point.scale Grid.chunkSize ( chunk.q, chunk.r ))
+                                        , ( remoteTile.height, () )
+                                        )
+                                    )
+                    in
+                    ( { model | map = Grid.insertList formatedTiles model.map }, Cmd.none )
+
+                Nothing ->
+                    -- let
+                    --     _ =
+                    --         Debug.log "Elm: chunk not found" chunk
+                    -- in
+                    ( model, Cmd.none )
 
 
 
