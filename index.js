@@ -12,7 +12,8 @@ app.ports.requestChunk.subscribe(function (position) {
             if (response.ok) {
                 return response.json();
             }
-            throw new Error('Something went wrong');
+            return Promise.reject("chunk not found");
+            // throw new Error('Something went wrong');
         })
         .then((json) => {
             // console.log("sending chunk", chunk, json);
