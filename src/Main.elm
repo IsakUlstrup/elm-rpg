@@ -9,7 +9,6 @@ import Html exposing (Html, main_)
 import Html.Attributes
 import Ports
 import Random
-import RemoteData
 import Svg exposing (Svg)
 import Svg.Attributes
 import Svg.Events
@@ -96,7 +95,7 @@ requestNeighbourChunks position =
 type Msg
     = ClickedTile Int Point
     | Tick Float
-    | GotChunk RemoteData.Chunk
+    | GotChunk Ports.Chunk
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
