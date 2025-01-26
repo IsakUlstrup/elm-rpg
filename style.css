@@ -30,6 +30,7 @@ body {
     stroke-width: 2;
     stroke-opacity: 0.5;
     stroke-linejoin: round;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
 .entity {
