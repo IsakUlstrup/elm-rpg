@@ -44,6 +44,7 @@ type alias Model =
     , lastChunk : Point
     , cameraPosition : Point
     , cameraHeight : Int
+    , editMode : Bool
     }
 
 
@@ -55,6 +56,7 @@ init _ =
         ( 0, 0 )
         ( 0, 0 )
         0
+        False
     , requestNeighbourChunks ( 0, 0 )
     )
 
@@ -80,6 +82,7 @@ type Msg
     | GotChunk Ports.Chunk
     | ClickedDownloadChunks
     | ClickedGhostTile Point
+    | ClickedToggleEditMode
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -169,6 +172,11 @@ update msg model =
             , Cmd.none
             )
 
+        ClickedToggleEditMode ->
+            ( { model | editMode = not model.editMode }
+            , Cmd.none
+            )
+
 
 
 -- VIEW
@@ -237,11 +245,20 @@ view model =
     main_
         [ Html.Attributes.id "game"
         ]
-        [ Html.button [ Html.Events.onClick ClickedDownloadChunks ] [ Html.text "download map" ]
+        [ Html.div [ Html.Attributes.class "dev-bar" ]
+            [ Html.button [ Html.Events.onClick ClickedDownloadChunks ] [ Html.text "download map" ]
+            , Html.button [ Html.Events.onClick ClickedToggleEditMode ] [ Html.text "toggle edit mode" ]
+            ]
         , Render.svg [ Svg.Attributes.class "game-svg" ]
             [ Render.pointHeightCamera [ Svg.Attributes.class "camera" ]
                 [ Svg.g [] (model.map |> Grid.getTiles |> List.map (viewTile []))
-                , Svg.g [] (Point.square 20 ( -5, -5 ) |> List.map (\pos -> ( pos, () )) |> List.map (viewGhostTile []))
+                , Svg.g []
+                    (if model.editMode then
+                        Point.square 20 ( -5, -5 ) |> List.map (\pos -> ( pos, () )) |> List.map (viewGhostTile [])
+
+                     else
+                        []
+                    )
                 ]
                 model.cameraPosition
                 model.cameraHeight
