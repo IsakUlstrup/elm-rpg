@@ -1,6 +1,7 @@
 module Engine.Grid exposing
     ( Grid
     , chunkSize
+    , chunksToList
     , empty
     , fromList
     , getTiles
@@ -158,3 +159,10 @@ pointToChunk ( q, r ) =
     ( toFloat q / toFloat chunkSize |> floor
     , toFloat r / toFloat chunkSize |> floor
     )
+
+
+chunksToList : Grid a -> List ( Point, List ( Point, a ) )
+chunksToList (Grid grid) =
+    grid
+        |> Dict.toList
+        |> List.map (\( pos, chunk ) -> ( pos, Dict.toList chunk ))

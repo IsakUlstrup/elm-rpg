@@ -5,8 +5,11 @@ import Browser.Events
 import Engine.Grid as Grid exposing (Grid)
 import Engine.Point as Point exposing (Point)
 import Engine.Render as Render
+import File.Download as Download
 import Html exposing (Html, main_)
 import Html.Attributes
+import Html.Events
+import Json.Encode as Encode exposing (Value)
 import Ports
 import Random
 import Svg exposing (Svg)
@@ -48,7 +51,7 @@ type alias Entity =
 
 
 type RenderElement
-    = TileElement Int Tile
+    = TileElement Tile
     | EntityElement Int Entity
 
 
@@ -58,7 +61,7 @@ type RenderElement
 
 type alias Model =
     { seed : Random.Seed
-    , map : Grid ( Int, Tile )
+    , map : Grid Tile
     , lastChunk : Point
     , cameraPosition : Point
     , cameraHeight : Int
@@ -96,6 +99,7 @@ type Msg
     = ClickedTile Int Point
     | Tick Float
     | GotChunk Ports.Chunk
+    | ClickedDownloadChunks
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -136,13 +140,13 @@ update msg model =
                     let
                         -- _ =
                         --     Debug.log "got chunk" data
-                        formatedTiles : List ( Point, ( Int, Tile ) )
+                        formatedTiles : List ( Point, Tile )
                         formatedTiles =
                             tiles
                                 |> List.map
                                     (\remoteTile ->
                                         ( ( remoteTile.q, remoteTile.r ) |> Point.add (Point.scale Grid.chunkSize ( chunk.q, chunk.r ))
-                                        , ( remoteTile.height, () )
+                                        , ()
                                         )
                                     )
                     in
@@ -155,14 +159,42 @@ update msg model =
                     -- in
                     ( model, Cmd.none )
 
+        ClickedDownloadChunks ->
+            let
+                tileEncoder : ( Point, Tile ) -> Value
+                tileEncoder ( ( q, r ), _ ) =
+                    Encode.object
+                        [ ( "q", Encode.int q )
+                        , ( "r", Encode.int r )
+                        ]
+
+                z =
+                    model.map
+                        |> Grid.chunksToList
+                        |> List.map
+                            (\( pos, chunk ) ->
+                                chunk
+                                    |> Encode.list tileEncoder
+                                    |> Encode.encode 0
+                                    |> Download.string (Point.toString pos ++ ".json") "text/json"
+                            )
+                        |> Cmd.batch
+
+                -- |> List.map (Download.string "")
+            in
+            ( model, z )
+
 
 
 -- VIEW
 
 
-viewTile : List (Svg.Attribute Msg) -> Int -> ( Point, Tile ) -> Svg Msg
-viewTile attrs height ( position, tile ) =
+viewTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
+viewTile attrs ( position, tile ) =
     let
+        height =
+            0
+
         chunkPos =
             Grid.pointToChunk position
 
@@ -245,7 +277,7 @@ viewEntity attrs ( id, entity ) =
         ]
 
 
-viewGrid : Point -> Grid ( Int, Tile ) -> Svg Msg
+viewGrid : Point -> Grid Tile -> Svg Msg
 viewGrid playerPos tiles =
     let
         -- tileDistClass p =
@@ -258,7 +290,7 @@ viewGrid playerPos tiles =
         --         |> Maybe.map .position
         --         |> Maybe.withDefault ( 0, 0 )
         tileList =
-            tiles |> Grid.getTilesRadius playerPos |> List.map (\( position, ( height, tile ) ) -> ( position, TileElement height tile ))
+            tiles |> Grid.getTilesRadius playerPos |> List.map (\( position, tile ) -> ( position, TileElement tile ))
 
         -- entityList =
         --     entities |> Dict.toList |> List.map (\( id, entity ) -> ( entity.position, EntityElement id entity ))
@@ -283,9 +315,9 @@ viewGrid playerPos tiles =
                     , viewEntity [ Svg.Attributes.pointerEvents "none" ] ( id, entity )
                     )
 
-                TileElement height tile ->
+                TileElement tile ->
                     ( Point.toString pos
-                    , viewTile [] height ( pos, tile )
+                    , viewTile [] ( pos, tile )
                     )
     in
     Svg.Keyed.node "g" [] (allElements |> List.map viewElement)
@@ -296,7 +328,8 @@ view model =
     main_
         [ Html.Attributes.id "game"
         ]
-        [ Render.svg [ Svg.Attributes.class "game-svg" ]
+        [ Html.button [ Html.Events.onClick ClickedDownloadChunks ] [ Html.text "download map" ]
+        , Render.svg [ Svg.Attributes.class "game-svg" ]
             [ Render.pointHeightCamera [ Svg.Attributes.class "camera" ]
                 [ Svg.Lazy.lazy2 viewGrid model.cameraPosition model.map
                 ]
