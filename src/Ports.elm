@@ -16,8 +16,6 @@ type alias Chunk =
 type alias Tile =
     { q : Int
     , r : Int
-    , height : Int
-    , hue : Int
     }
 
 

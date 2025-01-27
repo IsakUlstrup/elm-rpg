@@ -79,6 +79,7 @@ type Msg
     | Tick Float
     | GotChunk Ports.Chunk
     | ClickedDownloadChunks
+    | ClickedGhostTile Point
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -163,6 +164,11 @@ update msg model =
             in
             ( model, z )
 
+        ClickedGhostTile position ->
+            ( { model | map = model.map |> Grid.insert position () }
+            , Cmd.none
+            )
+
 
 
 -- VIEW
@@ -211,6 +217,21 @@ viewTile attrs ( position, tile ) =
         ]
 
 
+viewGhostTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
+viewGhostTile attrs ( position, tile ) =
+    Svg.g
+        ([ Render.hexTransform position
+         , Svg.Attributes.class "tile"
+         , Svg.Events.onClick (ClickedGhostTile position)
+         ]
+            ++ attrs
+        )
+        [ Render.viewHardcodedHex
+            [ Svg.Attributes.fill "rgba(0, 0, 0, 0.2)"
+            ]
+        ]
+
+
 view : Model -> Html Msg
 view model =
     main_
@@ -220,6 +241,7 @@ view model =
         , Render.svg [ Svg.Attributes.class "game-svg" ]
             [ Render.pointHeightCamera [ Svg.Attributes.class "camera" ]
                 [ Svg.g [] (model.map |> Grid.getTiles |> List.map (viewTile []))
+                , Svg.g [] (Point.square 20 ( -5, -5 ) |> List.map (\pos -> ( pos, () )) |> List.map (viewGhostTile []))
                 ]
                 model.cameraPosition
                 model.cameraHeight
