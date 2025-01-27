@@ -125,7 +125,7 @@ update msg model =
                             tiles
                                 |> List.map
                                     (\remoteTile ->
-                                        ( ( remoteTile.q, remoteTile.r ) |> Point.add (Point.scale Grid.chunkSize ( chunk.q, chunk.r ))
+                                        ( ( remoteTile.q, remoteTile.r )
                                         , ()
                                         )
                                     )
