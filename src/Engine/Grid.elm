@@ -94,16 +94,11 @@ insertList tiles grid =
     List.foldl (\( pos, tile ) g -> insertNoReplace pos tile g) grid tiles
 
 
-getTiles : Point -> Grid a -> List ( Point, a )
-getTiles position (Grid grid) =
-    let
-        chunkPos =
-            pointToChunk position
-    in
+getTiles : Grid a -> List ( Point, a )
+getTiles (Grid grid) =
     grid
-        |> Dict.get chunkPos
-        |> Maybe.map Dict.toList
-        |> Maybe.withDefault []
+        |> Dict.toList
+        |> List.concatMap (\( _, chunk ) -> Dict.toList chunk)
 
 
 getTilesRadius : Point -> Grid a -> List ( Point, a )

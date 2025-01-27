@@ -15,8 +15,6 @@ import Random
 import Svg exposing (Svg)
 import Svg.Attributes
 import Svg.Events
-import Svg.Keyed
-import Svg.Lazy
 
 
 
@@ -34,25 +32,6 @@ zoom =
 
 type alias Tile =
     ()
-
-
-
--- ENTITY
-
-
-type alias Entity =
-    { position : Point
-    , height : Int
-    }
-
-
-
--- RENDER STUFF
-
-
-type RenderElement
-    = TileElement Tile
-    | EntityElement Int Entity
 
 
 
@@ -210,117 +189,26 @@ viewTile attrs ( position, tile ) =
          ]
             ++ attrs
         )
-        [ Svg.g
-            [ Svg.Attributes.class "tile-inner"
-
-            -- , transform
+        [ Render.viewHardcodedHex
+            [ fillColor 75 75
+            , Svg.Events.onClick (ClickedTile height position)
             ]
-            [ -- Svg.g [ fillColor 75 80 ]
-              -- [ Svg.rect
-              --     [ Svg.Attributes.x "-100"
-              --     , Svg.Attributes.y "0"
-              --     , Svg.Attributes.width "200"
-              --     , Svg.Attributes.height "5000"
-              --     ]
-              --     []
-              -- , Svg.rect
-              --     [ Svg.Attributes.x "-50"
-              --     , Svg.Attributes.y "0"
-              --     , Svg.Attributes.width "100"
-              --     , Svg.Attributes.height "5000"
-              --     ]
-              --     []
-              -- ]
-              Render.viewHardcodedHex
-                [ fillColor 75 75
-                , Svg.Events.onClick (ClickedTile height position)
-                ]
-            , Svg.text_
-                [ Svg.Attributes.stroke "none"
-                , Svg.Attributes.fill "black"
-                , Svg.Attributes.textAnchor "middle"
-                , Svg.Attributes.pointerEvents "none"
-                ]
-                [ Svg.text (Point.toString position) ]
-            , Svg.text_
-                [ Svg.Attributes.stroke "none"
-                , Svg.Attributes.fill "black"
-                , Svg.Attributes.textAnchor "middle"
-                , Svg.Attributes.pointerEvents "none"
-                , Svg.Attributes.y "30"
-                ]
-                [ Svg.text (Point.toString chunkPos) ]
+        , Svg.text_
+            [ Svg.Attributes.stroke "none"
+            , Svg.Attributes.fill "black"
+            , Svg.Attributes.textAnchor "middle"
+            , Svg.Attributes.pointerEvents "none"
             ]
+            [ Svg.text (Point.toString position) ]
+        , Svg.text_
+            [ Svg.Attributes.stroke "none"
+            , Svg.Attributes.fill "black"
+            , Svg.Attributes.textAnchor "middle"
+            , Svg.Attributes.pointerEvents "none"
+            , Svg.Attributes.y "30"
+            ]
+            [ Svg.text (Point.toString chunkPos) ]
         ]
-
-
-viewEntity : List (Svg.Attribute msg) -> ( Int, Entity ) -> Svg msg
-viewEntity attrs ( id, entity ) =
-    Svg.g
-        ([ Render.hexHeightTransform entity.height entity.position
-         , Svg.Attributes.class "entity"
-         ]
-            ++ attrs
-        )
-        [ Render.viewHardcodedHex []
-
-        -- , Svg.image
-        --     [ Svg.Attributes.xlinkHref "character.png"
-        --     , Svg.Attributes.class "sprite"
-        --     , Svg.Attributes.width "200"
-        --     , Svg.Attributes.height "200"
-        --     , Svg.Attributes.x "-100"
-        --     , Svg.Attributes.y "-180"
-        --     ]
-        --     []
-        -- <image href="mdn_logo_only_color.png" height="200" width="200" />
-        ]
-
-
-viewGrid : Point -> Grid Tile -> Svg Msg
-viewGrid playerPos tiles =
-    let
-        -- tileDistClass p =
-        --     if Point.distance playerPos p < 2 then
-        --         "close"
-        --     else
-        --         "far"
-        -- playerPos =
-        --     Dict.get 0 entities
-        --         |> Maybe.map .position
-        --         |> Maybe.withDefault ( 0, 0 )
-        tileList =
-            tiles |> Grid.getTilesRadius playerPos |> List.map (\( position, tile ) -> ( position, TileElement tile ))
-
-        -- entityList =
-        --     entities |> Dict.toList |> List.map (\( id, entity ) -> ( entity.position, EntityElement id entity ))
-        allElements : List ( Point, RenderElement )
-        allElements =
-            tileList
-
-        -- ++ entityList
-        -- |> List.sortBy
-        --     (\( _, tile ) ->
-        --         case tile of
-        --             EntityElement _ _ ->
-        --                 0.1
-        --             TileElement _ _ ->
-        --                 0
-        --     )
-        viewElement : ( Point, RenderElement ) -> ( String, Svg Msg )
-        viewElement ( pos, el ) =
-            case el of
-                EntityElement id entity ->
-                    ( String.fromInt id
-                    , viewEntity [ Svg.Attributes.pointerEvents "none" ] ( id, entity )
-                    )
-
-                TileElement tile ->
-                    ( Point.toString pos
-                    , viewTile [] ( pos, tile )
-                    )
-    in
-    Svg.Keyed.node "g" [] (allElements |> List.map viewElement)
 
 
 view : Model -> Html Msg
@@ -331,7 +219,7 @@ view model =
         [ Html.button [ Html.Events.onClick ClickedDownloadChunks ] [ Html.text "download map" ]
         , Render.svg [ Svg.Attributes.class "game-svg" ]
             [ Render.pointHeightCamera [ Svg.Attributes.class "camera" ]
-                [ Svg.Lazy.lazy2 viewGrid model.cameraPosition model.map
+                [ Svg.g [] (model.map |> Grid.getTiles |> List.map (viewTile []))
                 ]
                 model.cameraPosition
                 model.cameraHeight
