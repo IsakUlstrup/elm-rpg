@@ -160,8 +160,10 @@ ring center radius =
 
 circle : Int -> Point -> List Point
 circle radius center =
-    List.range 0 radius
-        |> List.concatMap (ring center)
+    center
+        :: (List.range 0 radius
+                |> List.concatMap (ring center)
+           )
 
 
 square : Int -> Point -> List Point
