@@ -153,9 +153,9 @@ ring center radius =
 
         side : Int -> List Point
         side s =
-            List.map (\i -> add (start s) (scale i (direction s))) (List.range 0 radius)
+            List.map (\i -> add (start s) (scale i (direction s))) (List.range 1 radius)
     in
-    List.concatMap side (List.range 0 6)
+    List.concatMap side (List.range 0 5)
 
 
 circle : Int -> Point -> List Point
