@@ -196,18 +196,6 @@ update msg model =
 
         PressedKey key ->
             case key of
-                -- "ArrowLeft" ->
-                --     ( { model | camera = Render.moveCameraX -100 model.camera }, Cmd.none )
-                -- "ArrowRight" ->
-                --     ( { model | camera = Render.moveCameraX 100 model.camera }, Cmd.none )
-                -- "ArrowUp" ->
-                --     ( { model | camera = Render.moveCameraY -100 model.camera }, Cmd.none )
-                -- "ArrowDown" ->
-                --     ( { model | camera = Render.moveCameraY 100 model.camera }, Cmd.none )
-                -- "-" ->
-                --     ( { model | camera = Render.zoomCamera -0.1 model.camera }, Cmd.none )
-                -- "+" ->
-                --     ( { model | camera = Render.zoomCamera 0.1 model.camera }, Cmd.none )
                 " " ->
                     ( { model | editMode = not model.editMode }, Cmd.none )
 
@@ -285,21 +273,22 @@ viewTile attrs ( position, tile ) =
         [ Render.viewHardcodedHex
             [ fillColor 75 75
             ]
-        , Svg.text_
-            [ Svg.Attributes.stroke "none"
-            , Svg.Attributes.fill "black"
-            , Svg.Attributes.textAnchor "middle"
-            , Svg.Attributes.pointerEvents "none"
-            ]
-            [ Svg.text (Point.toString position) ]
-        , Svg.text_
-            [ Svg.Attributes.stroke "none"
-            , Svg.Attributes.fill "black"
-            , Svg.Attributes.textAnchor "middle"
-            , Svg.Attributes.pointerEvents "none"
-            , Svg.Attributes.y "30"
-            ]
-            [ Svg.text (Point.toString chunkPos) ]
+
+        -- , Svg.text_
+        --     [ Svg.Attributes.stroke "none"
+        --     , Svg.Attributes.fill "black"
+        --     , Svg.Attributes.textAnchor "middle"
+        --     , Svg.Attributes.pointerEvents "none"
+        --     ]
+        --     [ Svg.text (Point.toString position) ]
+        -- , Svg.text_
+        --     [ Svg.Attributes.stroke "none"
+        --     , Svg.Attributes.fill "black"
+        --     , Svg.Attributes.textAnchor "middle"
+        --     , Svg.Attributes.pointerEvents "none"
+        --     , Svg.Attributes.y "30"
+        --     ]
+        --     [ Svg.text (Point.toString chunkPos) ]
         ]
 
 
