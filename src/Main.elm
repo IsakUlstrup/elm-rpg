@@ -166,31 +166,6 @@ update msg model =
 -- VIEW
 
 
-cantorPair : Int -> Int -> Int
-cantorPair x y =
-    let
-        -- Map integers to non-negative integers
-        mapToNonNegative n =
-            if n >= 0 then
-                2 * n
-
-            else
-                -2 * n - 1
-
-        -- Apply the mapping
-        nx =
-            mapToNonNegative x
-
-        ny =
-            mapToNonNegative y
-
-        -- Apply the Cantor pairing function
-        sum =
-            nx + ny
-    in
-    (sum * (sum + 1)) // 2 + ny
-
-
 viewTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
 viewTile attrs ( position, tile ) =
     let
@@ -201,7 +176,7 @@ viewTile attrs ( position, tile ) =
             Grid.pointToChunk position
 
         tileHue =
-            cantorPair (Tuple.first chunkPos) (Tuple.second chunkPos) * 100
+            Point.uniqueId chunkPos * 100
 
         fillColor saturation level =
             Svg.Attributes.fill ("hsl(" ++ String.fromInt tileHue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")

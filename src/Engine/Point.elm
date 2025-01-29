@@ -10,6 +10,7 @@ module Engine.Point exposing
     , square
     , subtract
     , toString
+    , uniqueId
     )
 
 {-| Axial coordinate
@@ -57,6 +58,33 @@ fromFloat ( x, y ) =
 isValid : Point -> Bool
 isValid ( q, r ) =
     q + r + (-q - r) == 0
+
+
+{-| Derive a unique number based off of point q and r
+-}
+uniqueId : Point -> Int
+uniqueId ( q, r ) =
+    let
+        -- Map integers to non-negative integers
+        mapToNonNegative n =
+            if n >= 0 then
+                2 * n
+
+            else
+                -2 * n - 1
+
+        -- Apply the mapping
+        nq =
+            mapToNonNegative q
+
+        nr =
+            mapToNonNegative r
+
+        -- Apply the Cantor pairing function
+        sum =
+            nq + nr
+    in
+    (sum * (sum + 1)) // 2 + nr
 
 
 {-| Add two points togheter
