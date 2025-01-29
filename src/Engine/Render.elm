@@ -2,13 +2,11 @@ module Engine.Render exposing
     ( Camera
     , camera
     , cameraToPoint
-    , hexHeightTransform
     , hexTransform
     , moveCameraX
     , moveCameraY
     , newCamera
     , pointCamera
-    , pointHeightCamera
     , pointToPixel
     , svg
     , viewDebugPath
@@ -67,29 +65,13 @@ hexSize =
     100
 
 
-pointyTop : Bool
-pointyTop =
-    False
-
-
-stepSize : number
-stepSize =
-    50
-
-
 {-| Get the center of a given point in screen coordinates
 -}
 pointToPixel : Point -> ( Float, Float )
 pointToPixel ( q, r ) =
-    if pointyTop then
-        ( hexSize * (sqrt 3 * toFloat q + sqrt 3 / 2 * toFloat r)
-        , hexSize * (3 / 2 * toFloat r)
-        )
-
-    else
-        ( hexSize * (3 / 2 * toFloat r)
-        , hexSize * (sqrt 3 / 2 * toFloat r + sqrt 3 * toFloat q)
-        )
+    ( hexSize * (3 / 2 * toFloat r)
+    , hexSize * (sqrt 3 / 2 * toFloat r + sqrt 3 * toFloat q)
+    )
 
 
 cameraToPoint : Camera -> Point
@@ -126,15 +108,9 @@ generateHexCorners =
     let
         corner : Float -> ( Float, Float )
         corner cornerNumber =
-            if pointyTop then
-                ( hexSize * cos (degrees <| 60 * cornerNumber + 30)
-                , hexSize * sin (degrees <| 60 * cornerNumber + 30)
-                )
-
-            else
-                ( hexSize * cos (degrees <| 60 * cornerNumber)
-                , hexSize * sin (degrees <| 60 * cornerNumber)
-                )
+            ( hexSize * cos (degrees <| 60 * cornerNumber)
+            , hexSize * sin (degrees <| 60 * cornerNumber)
+            )
     in
     List.range 0 5
         |> List.map (toFloat >> corner)
@@ -168,23 +144,6 @@ hexTransform position =
             ++ String.fromInt x
             ++ "px, "
             ++ String.fromInt y
-            ++ "px)"
-        )
-
-
-{-| Calculate & set svg transform in screen coordinates
--}
-hexHeightTransform : Int -> Point -> Attribute msg
-hexHeightTransform height position =
-    let
-        ( x, y ) =
-            pointToPixel position |> Tuple.mapBoth round round
-    in
-    Svg.Attributes.style
-        ("transform: translate("
-            ++ String.fromInt x
-            ++ "px, "
-            ++ String.fromInt (y - (height * stepSize))
             ++ "px)"
         )
 
@@ -225,29 +184,6 @@ pointCamera attrs children position =
                     ++ "px, "
                     ++ String.fromFloat -y
                     ++ "px)"
-                )
-    in
-    Svg.g (cameraTransform :: attrs) children
-
-
-{-| Camera element
--}
-pointHeightCamera : List (Attribute msg) -> List (Svg msg) -> Point -> Int -> Float -> Svg msg
-pointHeightCamera attrs children position height zoom =
-    let
-        ( x, y ) =
-            pointToPixel position
-
-        cameraTransform : Attribute msg
-        cameraTransform =
-            Svg.Attributes.style
-                ("transform: translate("
-                    ++ String.fromInt -(round (x * zoom))
-                    ++ "px, "
-                    ++ String.fromInt -((y * zoom) - (toFloat height * stepSize) |> round)
-                    ++ "px) scale("
-                    ++ String.fromFloat zoom
-                    ++ ")"
                 )
     in
     Svg.g (cameraTransform :: attrs) children
