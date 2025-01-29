@@ -9,7 +9,6 @@ import Engine.Render as Render exposing (Camera)
 import File.Download as Download
 import Html exposing (Html, main_)
 import Html.Attributes
-import Html.Events
 import Json.Decode as Decode exposing (Decoder)
 import Ports
 import Random
@@ -36,6 +35,7 @@ type alias Model =
     , lastChunk : Point
     , camera : Camera
     , editMode : Bool
+    , pointerDown : Bool
     }
 
 
@@ -46,6 +46,7 @@ init _ =
         Grid.empty
         ( 0, 0 )
         Render.newCamera
+        False
         False
     , requestNeighbourChunks ( 0, 0 )
     )
@@ -69,10 +70,11 @@ requestNeighbourChunks position =
 type Msg
     = Tick Float
     | GotChunk Ports.Chunk
-    | ClickedDownloadChunks
     | ClickedGhostTile Point
-    | ClickedToggleEditMode
     | PressedKey String
+    | MouseDown Point
+    | MouseOver Point
+    | MouseUp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -120,46 +122,66 @@ update msg model =
                     -- in
                     ( model, Cmd.none )
 
-        ClickedDownloadChunks ->
-            ( model
-            , model.map
-                |> Codec.encodeChunks
-                |> List.map (\( name, data ) -> Download.string name "text/json" data)
-                |> Cmd.batch
-            )
-
         ClickedGhostTile position ->
             ( { model | map = model.map |> Grid.insert position () }
             , Cmd.none
             )
 
-        ClickedToggleEditMode ->
-            ( { model | editMode = not model.editMode }
+        PressedKey key ->
+            case key of
+                "ArrowLeft" ->
+                    ( { model | camera = Render.moveCameraX -100 model.camera }, Cmd.none )
+
+                "ArrowRight" ->
+                    ( { model | camera = Render.moveCameraX 100 model.camera }, Cmd.none )
+
+                "ArrowUp" ->
+                    ( { model | camera = Render.moveCameraY -100 model.camera }, Cmd.none )
+
+                "ArrowDown" ->
+                    ( { model | camera = Render.moveCameraY 100 model.camera }, Cmd.none )
+
+                "-" ->
+                    ( { model | camera = Render.zoomCamera -0.1 model.camera }, Cmd.none )
+
+                "+" ->
+                    ( { model | camera = Render.zoomCamera 0.1 model.camera }, Cmd.none )
+
+                " " ->
+                    ( { model | editMode = not model.editMode }, Cmd.none )
+
+                "e" ->
+                    ( model
+                    , model.map
+                        |> Codec.encodeChunks
+                        |> List.map (\( name, data ) -> Download.string name "text/json" data)
+                        |> Cmd.batch
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        MouseDown position ->
+            ( if model.editMode then
+                { model
+                    | map = model.map |> Grid.insert position ()
+                    , pointerDown = True
+                }
+
+              else
+                model
             , Cmd.none
             )
 
-        PressedKey key ->
-            ( case key of
-                "ArrowLeft" ->
-                    { model | camera = Render.moveCameraX -100 model.camera }
+        MouseUp ->
+            ( { model | pointerDown = False }, Cmd.none )
 
-                "ArrowRight" ->
-                    { model | camera = Render.moveCameraX 100 model.camera }
+        MouseOver position ->
+            ( if model.editMode && model.pointerDown then
+                { model | map = model.map |> Grid.insert position () }
 
-                "ArrowUp" ->
-                    { model | camera = Render.moveCameraY -100 model.camera }
-
-                "ArrowDown" ->
-                    { model | camera = Render.moveCameraY 100 model.camera }
-
-                "-" ->
-                    { model | camera = Render.zoomCamera -0.1 model.camera }
-
-                "+" ->
-                    { model | camera = Render.zoomCamera 0.1 model.camera }
-
-                _ ->
-                    model
+              else
+                model
             , Cmd.none
             )
 
@@ -212,7 +234,8 @@ viewGhostTile attrs ( position, tile ) =
     Svg.g
         ([ Render.hexTransform position
          , Svg.Attributes.class "tile"
-         , Svg.Events.onClick (ClickedGhostTile position)
+         , Svg.Events.onMouseDown (MouseDown position)
+         , Svg.Events.onMouseOver (MouseOver position)
          ]
             ++ attrs
         )
@@ -231,11 +254,7 @@ view model =
     main_
         [ Html.Attributes.id "game"
         ]
-        [ Html.div [ Html.Attributes.class "dev-bar" ]
-            [ Html.button [ Html.Events.onClick ClickedDownloadChunks ] [ Html.text "download map" ]
-            , Html.button [ Html.Events.onClick ClickedToggleEditMode ] [ Html.text "toggle edit mode" ]
-            ]
-        , Render.svg [ Svg.Attributes.class "game-svg" ]
+        [ Render.svg [ Svg.Attributes.class "game-svg" ]
             [ Render.camera model.camera
                 [ Svg.Attributes.class "camera" ]
                 [ Svg.g [] (model.map |> Grid.getTiles |> List.map (viewTile []))
@@ -260,9 +279,11 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ Browser.Events.onAnimationFrameDelta Tick
-        , Ports.gotChunk GotChunk
+        [ Ports.gotChunk GotChunk
         , Browser.Events.onKeyDown keyDecoder
+        , Browser.Events.onMouseUp (Decode.succeed MouseUp)
+
+        -- , Browser.Events.onAnimationFrameDelta Tick
         ]
 
 
