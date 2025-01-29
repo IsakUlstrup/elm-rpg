@@ -140,16 +140,16 @@ update msg model =
 
         PressedKey key ->
             ( case key of
-                "a" ->
+                "ArrowLeft" ->
                     { model | camera = Render.moveCameraX -100 model.camera }
 
-                "d" ->
+                "ArrowRight" ->
                     { model | camera = Render.moveCameraX 100 model.camera }
 
-                "w" ->
+                "ArrowUp" ->
                     { model | camera = Render.moveCameraY -100 model.camera }
 
-                "s" ->
+                "ArrowDown" ->
                     { model | camera = Render.moveCameraY 100 model.camera }
 
                 "-" ->
