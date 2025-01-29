@@ -61,11 +61,9 @@ init _ =
 
 requestNeighbourChunks : Point -> Cmd Msg
 requestNeighbourChunks position =
-    let
-        chunkPosition =
-            Grid.pointToChunk position
-    in
-    (chunkPosition :: Point.neighbours chunkPosition)
+    position
+        |> Grid.pointToChunk
+        |> Grid.chunkNeighbours
         |> List.map Ports.requestChunk
         |> Cmd.batch
 
@@ -140,10 +138,10 @@ update msg model =
                     ( { model | map = Grid.insertList formatedTiles model.map }, Cmd.none )
 
                 Nothing ->
-                    -- let
-                    --     _ =
-                    --         Debug.log "Elm: chunk not found" chunk
-                    -- in
+                    let
+                        _ =
+                            Debug.log "Elm: chunk not found" chunk
+                    in
                     ( model, Cmd.none )
 
         PressedKey key ->
@@ -357,8 +355,7 @@ subscriptions _ =
         [ Ports.gotChunk GotChunk
         , Browser.Events.onKeyDown keyDecoder
         , Browser.Events.onMouseUp (Decode.succeed MouseUp)
-
-        -- , Browser.Events.onAnimationFrameDelta Tick
+        , Browser.Events.onAnimationFrameDelta Tick
         ]
 
 

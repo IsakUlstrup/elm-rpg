@@ -1,5 +1,6 @@
 module Engine.Grid exposing
     ( Grid
+    , chunkNeighbours
     , chunkSize
     , chunksToList
     , empty
@@ -119,18 +120,24 @@ getTiles (Grid grid) =
         |> List.concatMap (\( _, chunk ) -> Dict.toList chunk)
 
 
+chunkNeighbours : Point -> List Point
+chunkNeighbours position =
+    List.range -1 1
+        |> List.concatMap
+            (\q ->
+                List.range -1 1
+                    |> List.map (\r -> ( q, r ))
+            )
+        |> List.map (Point.add position)
+
+
 getTilesRadius : Point -> Grid a -> List ( Point, a )
 getTilesRadius position (Grid grid) =
-    let
-        chunkPos =
-            pointToChunk position
-
-        neighbours =
-            (chunkPos :: Point.neighbours chunkPos)
-                |> List.map
-                    (\direction -> Dict.get direction grid)
-    in
-    neighbours
+    position
+        |> pointToChunk
+        |> chunkNeighbours
+        |> List.map
+            (\direction -> Dict.get direction grid)
         |> List.foldl
             (\maybeChunk dict ->
                 case maybeChunk of
