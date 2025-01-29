@@ -10,6 +10,7 @@ module Engine.Grid exposing
     , insert
     , insertList
     , map
+    , missingChunks
     , pointToChunk
     , remove
     , removeList
@@ -130,6 +131,23 @@ chunkNeighbours position =
                     |> List.map (\r -> ( q, r ))
             )
         |> List.map (Point.add position)
+
+
+missingChunks : Point -> Grid a -> List Point
+missingChunks position (Grid grid) =
+    position
+        |> pointToChunk
+        |> chunkNeighbours
+        |> List.foldl
+            (\pos accum ->
+                case Dict.get pos grid of
+                    Just _ ->
+                        accum
+
+                    Nothing ->
+                        pos :: accum
+            )
+            []
 
 
 

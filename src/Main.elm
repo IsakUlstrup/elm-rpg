@@ -55,15 +55,14 @@ init _ =
         1
         ( 0, 0 )
         False
-    , requestNeighbourChunks ( 0, 0 )
+    , requestNeighbourChunks ( 0, 0 ) Grid.empty
     )
 
 
-requestNeighbourChunks : Point -> Cmd Msg
-requestNeighbourChunks position =
-    position
-        |> Grid.pointToChunk
-        |> Grid.chunkNeighbours
+requestNeighbourChunks : Point -> Grid Tile -> Cmd Msg
+requestNeighbourChunks position grid =
+    grid
+        |> Grid.missingChunks position
         |> List.map Ports.requestChunk
         |> Cmd.batch
 
@@ -112,7 +111,7 @@ update msg model =
                     | lastChunk = chunkPosition
                     , map = Grid.removeOutsideNeighbours chunkPosition model.map
                   }
-                , requestNeighbourChunks chunkPosition
+                , requestNeighbourChunks chunkPosition model.map
                 )
 
             else
