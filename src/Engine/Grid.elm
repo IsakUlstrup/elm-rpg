@@ -31,7 +31,7 @@ type Grid a
 
 chunkSize : Int
 chunkSize =
-    3
+    5
 
 
 
