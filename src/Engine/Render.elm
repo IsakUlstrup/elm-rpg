@@ -1,12 +1,12 @@
 module Engine.Render exposing
     ( Camera
     , camera
+    , cameraToPoint
     , hexHeightTransform
     , hexTransform
     , moveCameraX
     , moveCameraY
     , newCamera
-    , pixelToPoint
     , pointCamera
     , pointHeightCamera
     , pointToPixel
@@ -92,14 +92,14 @@ pointToPixel ( q, r ) =
         )
 
 
-pixelToPoint : Float -> Float -> Point
-pixelToPoint x y =
+cameraToPoint : Camera -> Point
+cameraToPoint cam =
     let
         q =
-            (2 / 3 * x) / hexSize
+            ((2 / 3 * cam.x) / hexSize) * (1 / cam.zoom)
 
         r =
-            (-1 / 3 * x + sqrt 3 / 3 * y) / hexSize
+            ((-1 / 3 * cam.x + sqrt 3 / 3 * cam.y) / hexSize) * (1 / cam.zoom)
     in
     Point.fromFloat ( r, q )
 

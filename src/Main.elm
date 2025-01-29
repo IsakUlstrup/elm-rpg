@@ -81,7 +81,7 @@ update msg model =
         Tick _ ->
             let
                 chunkPosition =
-                    Grid.pointToChunk (Render.pixelToPoint model.camera.x model.camera.y)
+                    Grid.pointToChunk (Render.cameraToPoint model.camera)
             in
             if chunkPosition /= model.lastChunk then
                 ( { model
@@ -226,7 +226,7 @@ view : Model -> Html Msg
 view model =
     let
         cameraPoint =
-            Render.pixelToPoint model.camera.x model.camera.y
+            Render.cameraToPoint model.camera
     in
     main_
         [ Html.Attributes.id "game"
