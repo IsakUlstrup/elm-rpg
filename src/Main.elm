@@ -81,7 +81,7 @@ update msg model =
         Tick _ ->
             let
                 chunkPosition =
-                    Grid.pointToChunk (Point.fromFloat ( model.camera.x, model.camera.y ))
+                    Grid.pointToChunk (Render.pixelToPoint model.camera.x model.camera.y)
             in
             if chunkPosition /= model.lastChunk then
                 ( { model
@@ -242,7 +242,7 @@ view model =
                     )
                 , Render.viewHardcodedHex [ Render.hexTransform cameraPoint, Svg.Attributes.opacity "0.2" ]
                 ]
-            , Svg.circle [ Svg.Attributes.r "5" ] []
+            , Svg.circle [ Svg.Attributes.r "5", Svg.Attributes.opacity "0.2" ] []
             ]
         ]
 
