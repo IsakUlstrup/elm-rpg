@@ -4,8 +4,6 @@ module Engine.Grid exposing
     , chunkSize
     , chunksToList
     , empty
-    , filterChunks
-    , fromList
     , getTiles
     , insert
     , insertList
@@ -15,7 +13,6 @@ module Engine.Grid exposing
     , remove
     , removeList
     , removeOutsideNeighbours
-    , updateNeighbours
     )
 
 import Dict exposing (Dict)
@@ -47,11 +44,6 @@ drawDistance =
 empty : Grid a
 empty =
     Grid Dict.empty
-
-
-fromList : List ( Point, a ) -> Grid a
-fromList tiles =
-    List.foldl (\( pos, tile ) grid -> insert pos tile grid) empty tiles
 
 
 
@@ -159,34 +151,11 @@ map f (Grid grid) =
     grid |> Dict.map (\_ chunk -> Dict.map f chunk) |> Grid
 
 
-filterChunks : (Point -> Dict Point a -> Bool) -> Grid a -> Grid a
-filterChunks predicate (Grid grid) =
-    Grid (Dict.filter predicate grid)
-
-
 {-| remove all chunks not neighbouring provided chunk position
 -}
 removeOutsideNeighbours : Point -> Grid a -> Grid a
 removeOutsideNeighbours position (Grid grid) =
     Dict.filter (\pos _ -> List.member pos (chunkNeighbours drawDistance position)) grid |> Grid
-
-
-updateNeighbours : (Point -> a -> a) -> Point -> Grid a -> Grid a
-updateNeighbours f position (Grid grid) =
-    let
-        chunkPos =
-            pointToChunk position
-
-        chunks =
-            chunkPos :: Point.neighbours chunkPos
-    in
-    chunks
-        |> List.foldl
-            (\neighbour g ->
-                Dict.update neighbour (Maybe.map (Dict.map f)) g
-            )
-            grid
-        |> Grid
 
 
 pointToChunk : Point -> Point
