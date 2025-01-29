@@ -38,6 +38,7 @@ type alias Model =
     , editMode : Bool
     , pointerDown : Bool
     , brushSize : Int
+    , hoverPoint : Point
     }
 
 
@@ -51,6 +52,7 @@ init _ =
         False
         False
         1
+        ( 0, 0 )
     , requestNeighbourChunks ( 0, 0 )
     )
 
@@ -192,10 +194,10 @@ update msg model =
 
         MouseOver position ->
             ( if model.editMode && model.pointerDown then
-                model |> applyBrush position
+                { model | hoverPoint = position } |> applyBrush position
 
               else
-                model
+                { model | hoverPoint = position }
             , Cmd.none
             )
 
@@ -262,6 +264,21 @@ viewGhostTile attrs ( position, tile ) =
         ]
 
 
+viewBrushPreview : Int -> Point -> Svg Msg
+viewBrushPreview brushRadius position =
+    let
+        brush =
+            Point.circle brushRadius position
+
+        viewPreviewTile tilePosition =
+            Render.viewHardcodedHex
+                [ Svg.Attributes.fill "rgba(255, 255, 255, 0.2)"
+                , Render.hexTransform tilePosition
+                ]
+    in
+    Svg.g [ Svg.Attributes.pointerEvents "none" ] (brush |> List.map viewPreviewTile)
+
+
 viewEditorToolbar : Bool -> Int -> Html Msg
 viewEditorToolbar enabled brushRadius =
     Html.div []
@@ -303,6 +320,7 @@ view model =
                         []
                     )
                 , Render.viewHardcodedHex [ Render.hexTransform cameraPoint, Svg.Attributes.opacity "0.2" ]
+                , viewBrushPreview model.brushSize model.hoverPoint
                 ]
             , Svg.circle [ Svg.Attributes.r "5", Svg.Attributes.opacity "0.2" ] []
             ]
