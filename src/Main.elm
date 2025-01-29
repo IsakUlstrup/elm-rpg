@@ -426,7 +426,7 @@ viewPlayer player =
     Svg.circle
         [ Render.hexTransform player.position
         , Svg.Attributes.r "50"
-        , Svg.Attributes.fill "lightblue"
+        , Svg.Attributes.fill "#626262"
         , Svg.Attributes.class "player"
         ]
         []
