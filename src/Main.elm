@@ -235,7 +235,7 @@ view model =
                 [ Svg.g [] (model.map |> Grid.getTiles |> List.map (viewTile []))
                 , Svg.g []
                     (if model.editMode then
-                        Point.circle 5 cameraPoint |> List.map (\pos -> ( pos, () )) |> List.map (viewGhostTile [])
+                        Point.circle 9 cameraPoint |> List.map (\pos -> ( pos, () )) |> List.map (viewGhostTile [])
 
                      else
                         []
