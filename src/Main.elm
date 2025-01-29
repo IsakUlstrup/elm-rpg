@@ -220,6 +220,8 @@ view model =
                         []
                     )
                 ]
+            , Svg.circle [ Svg.Attributes.r "5" ] []
+            , Render.viewHardcodedHex [ Render.hexTransform cameraPoint, Svg.Attributes.opacity "0.2" ]
             ]
         ]
 
