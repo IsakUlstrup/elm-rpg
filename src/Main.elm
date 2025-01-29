@@ -2,6 +2,7 @@ module Main exposing (Model, Msg, main)
 
 import Browser
 import Browser.Events
+import Engine.Codec as Codec
 import Engine.Grid as Grid exposing (Grid)
 import Engine.Point as Point exposing (Point)
 import Engine.Render as Render exposing (Camera)
@@ -9,7 +10,6 @@ import File.Download as Download
 import Html exposing (Html, main_)
 import Html.Attributes
 import Html.Events
-import Json.Encode as Encode exposing (Value)
 import Ports
 import Random
 import Svg exposing (Svg)
@@ -66,8 +66,7 @@ requestNeighbourChunks position =
 
 
 type Msg
-    = ClickedTile Int Point
-    | Tick Float
+    = Tick Float
     | GotChunk Ports.Chunk
     | ClickedDownloadChunks
     | ClickedGhostTile Point
@@ -77,11 +76,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ClickedTile _ _ ->
-            ( model
-            , Cmd.none
-            )
-
         Tick _ ->
             let
                 chunkPosition =
@@ -90,8 +84,6 @@ update msg model =
             if chunkPosition /= model.lastChunk then
                 ( { model
                     | lastChunk = chunkPosition
-
-                    -- , map = Grid.updateNeighbours (tickTile playerPos dt) model.cameraPosition model.map
                   }
                 , requestNeighbourChunks chunkPosition
                 )
@@ -127,29 +119,12 @@ update msg model =
                     ( model, Cmd.none )
 
         ClickedDownloadChunks ->
-            let
-                tileEncoder : ( Point, Tile ) -> Value
-                tileEncoder ( ( q, r ), _ ) =
-                    Encode.object
-                        [ ( "q", Encode.int q )
-                        , ( "r", Encode.int r )
-                        ]
-
-                z =
-                    model.map
-                        |> Grid.chunksToList
-                        |> List.map
-                            (\( pos, chunk ) ->
-                                chunk
-                                    |> Encode.list tileEncoder
-                                    |> Encode.encode 0
-                                    |> Download.string (Point.toString pos ++ ".json") "text/json"
-                            )
-                        |> Cmd.batch
-
-                -- |> List.map (Download.string "")
-            in
-            ( model, z )
+            ( model
+            , model.map
+                |> Codec.encodeChunks
+                |> List.map (\( name, data ) -> Download.string name "text/json" data)
+                |> Cmd.batch
+            )
 
         ClickedGhostTile position ->
             ( { model | map = model.map |> Grid.insert position () }
@@ -169,9 +144,6 @@ update msg model =
 viewTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
 viewTile attrs ( position, tile ) =
     let
-        height =
-            0
-
         chunkPos =
             Grid.pointToChunk position
 
@@ -182,14 +154,13 @@ viewTile attrs ( position, tile ) =
             Svg.Attributes.fill ("hsl(" ++ String.fromInt tileHue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
     in
     Svg.g
-        ([ Render.hexHeightTransform height position
+        ([ Render.hexTransform position
          , Svg.Attributes.class "tile"
          ]
             ++ attrs
         )
         [ Render.viewHardcodedHex
             [ fillColor 75 75
-            , Svg.Events.onClick (ClickedTile height position)
             ]
         , Svg.text_
             [ Svg.Attributes.stroke "none"
