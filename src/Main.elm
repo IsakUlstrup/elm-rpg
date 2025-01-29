@@ -152,6 +152,12 @@ update msg model =
                 "s" ->
                     { model | camera = Render.moveCameraY 100 model.camera }
 
+                "-" ->
+                    { model | camera = Render.zoomCamera -0.1 model.camera }
+
+                "+" ->
+                    { model | camera = Render.zoomCamera 0.1 model.camera }
+
                 _ ->
                     model
             , Cmd.none
