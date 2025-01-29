@@ -6,6 +6,7 @@ module Engine.Render exposing
     , moveCameraX
     , moveCameraY
     , newCamera
+    , pixelToPoint
     , pointCamera
     , pointHeightCamera
     , pointToPixel
@@ -89,6 +90,18 @@ pointToPixel ( q, r ) =
         ( hexSize * (3 / 2 * toFloat r)
         , hexSize * (sqrt 3 / 2 * toFloat r + sqrt 3 * toFloat q)
         )
+
+
+pixelToPoint : Float -> Float -> Point
+pixelToPoint x y =
+    let
+        q =
+            (2 / 3 * x) / hexSize
+
+        r =
+            (-1 / 3 * x + sqrt 3 / 3 * y) / hexSize
+    in
+    Point.fromFloat ( r, q )
 
 
 {-| Convert a list of floats to a Svg points attribute

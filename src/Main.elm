@@ -5,11 +5,12 @@ import Browser.Events
 import Engine.Codec as Codec
 import Engine.Grid as Grid exposing (Grid)
 import Engine.Point as Point exposing (Point)
-import Engine.Render as Render exposing (Camera)
+import Engine.Render as Render exposing (Camera, camera)
 import File.Download as Download
 import Html exposing (Html, main_)
 import Html.Attributes
 import Html.Events
+import Json.Decode as Decode exposing (Decoder)
 import Ports
 import Random
 import Svg exposing (Svg)
@@ -71,6 +72,7 @@ type Msg
     | ClickedDownloadChunks
     | ClickedGhostTile Point
     | ClickedToggleEditMode
+    | PressedKey String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -133,6 +135,25 @@ update msg model =
 
         ClickedToggleEditMode ->
             ( { model | editMode = not model.editMode }
+            , Cmd.none
+            )
+
+        PressedKey key ->
+            ( case key of
+                "a" ->
+                    { model | camera = Render.moveCameraX -100 model.camera }
+
+                "d" ->
+                    { model | camera = Render.moveCameraX 100 model.camera }
+
+                "w" ->
+                    { model | camera = Render.moveCameraY -100 model.camera }
+
+                "s" ->
+                    { model | camera = Render.moveCameraY 100 model.camera }
+
+                _ ->
+                    model
             , Cmd.none
             )
 
@@ -199,7 +220,7 @@ view : Model -> Html Msg
 view model =
     let
         cameraPoint =
-            Point.fromFloat ( model.camera.x, model.camera.y )
+            Render.pixelToPoint model.camera.x model.camera.y
     in
     main_
         [ Html.Attributes.id "game"
@@ -219,9 +240,9 @@ view model =
                      else
                         []
                     )
+                , Render.viewHardcodedHex [ Render.hexTransform cameraPoint, Svg.Attributes.opacity "0.2" ]
                 ]
             , Svg.circle [ Svg.Attributes.r "5" ] []
-            , Render.viewHardcodedHex [ Render.hexTransform cameraPoint, Svg.Attributes.opacity "0.2" ]
             ]
         ]
 
@@ -235,7 +256,13 @@ subscriptions _ =
     Sub.batch
         [ Browser.Events.onAnimationFrameDelta Tick
         , Ports.gotChunk GotChunk
+        , Browser.Events.onKeyDown keyDecoder
         ]
+
+
+keyDecoder : Decoder Msg
+keyDecoder =
+    Decode.map PressedKey (Decode.field "key" Decode.string)
 
 
 
