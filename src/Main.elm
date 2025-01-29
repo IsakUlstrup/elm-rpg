@@ -4,7 +4,7 @@ import Browser
 import Browser.Events
 import Engine.Codec as Codec
 import Engine.Grid as Grid exposing (Grid)
-import Engine.Path exposing (Path)
+import Engine.Path
 import Engine.Point as Point exposing (Point)
 import Engine.Render as Render exposing (Camera)
 import File.Download as Download
