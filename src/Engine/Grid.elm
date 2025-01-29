@@ -136,7 +136,6 @@ chunkNeighbours position =
 missingChunks : Point -> Grid a -> List Point
 missingChunks position (Grid grid) =
     position
-        |> pointToChunk
         |> chunkNeighbours
         |> List.foldl
             (\pos accum ->
