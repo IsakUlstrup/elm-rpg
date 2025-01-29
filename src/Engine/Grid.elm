@@ -4,15 +4,16 @@ module Engine.Grid exposing
     , chunkSize
     , chunksToList
     , empty
+    , filterChunks
     , fromList
     , getTiles
-    , getTilesRadius
     , insert
     , insertList
     , map
     , pointToChunk
     , remove
     , removeList
+    , removeOutsideNeighbours
     , updateNeighbours
     )
 
@@ -131,29 +132,41 @@ chunkNeighbours position =
         |> List.map (Point.add position)
 
 
-getTilesRadius : Point -> Grid a -> List ( Point, a )
-getTilesRadius position (Grid grid) =
-    position
-        |> pointToChunk
-        |> chunkNeighbours
-        |> List.map
-            (\direction -> Dict.get direction grid)
-        |> List.foldl
-            (\maybeChunk dict ->
-                case maybeChunk of
-                    Just chunk ->
-                        Dict.union dict chunk
 
-                    Nothing ->
-                        dict
-            )
-            Dict.empty
-        |> Dict.toList
+-- getTilesRadius : Point -> Grid a -> List ( Point, a )
+-- getTilesRadius position (Grid grid) =
+--     position
+--         |> pointToChunk
+--         |> chunkNeighbours
+--         |> List.map
+--             (\direction -> Dict.get direction grid)
+--         |> List.foldl
+--             (\maybeChunk dict ->
+--                 case maybeChunk of
+--                     Just chunk ->
+--                         Dict.union dict chunk
+--                     Nothing ->
+--                         dict
+--             )
+--             Dict.empty
+--         |> Dict.toList
 
 
 map : (Point -> a -> v) -> Grid a -> Grid v
 map f (Grid grid) =
     grid |> Dict.map (\_ chunk -> Dict.map f chunk) |> Grid
+
+
+filterChunks : (Point -> Dict Point a -> Bool) -> Grid a -> Grid a
+filterChunks predicate (Grid grid) =
+    Grid (Dict.filter predicate grid)
+
+
+{-| remove all chunks not neighbouring provided chunk position
+-}
+removeOutsideNeighbours : Point -> Grid a -> Grid a
+removeOutsideNeighbours position (Grid grid) =
+    Dict.filter (\pos _ -> List.member pos (chunkNeighbours position)) grid |> Grid
 
 
 updateNeighbours : (Point -> a -> a) -> Point -> Grid a -> Grid a

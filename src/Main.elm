@@ -110,6 +110,7 @@ update msg model =
             if chunkPosition /= model.lastChunk then
                 ( { model
                     | lastChunk = chunkPosition
+                    , map = Grid.removeOutsideNeighbours chunkPosition model.map
                   }
                 , requestNeighbourChunks chunkPosition
                 )
@@ -138,10 +139,10 @@ update msg model =
                     ( { model | map = Grid.insertList formatedTiles model.map }, Cmd.none )
 
                 Nothing ->
-                    let
-                        _ =
-                            Debug.log "Elm: chunk not found" chunk
-                    in
+                    -- let
+                    --     _ =
+                    --         Debug.log "Elm: chunk not found" chunk
+                    -- in
                     ( model, Cmd.none )
 
         PressedKey key ->
