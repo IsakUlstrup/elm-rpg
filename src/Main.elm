@@ -19,6 +19,37 @@ import Svg.Events
 
 
 
+-- CONSOLE
+
+
+type alias Console =
+    { input : String
+    , history : List String
+    , visible : Bool
+    }
+
+
+initConsole : Console
+initConsole =
+    Console "" [] False
+
+
+setConsoleInput : String -> Console -> Console
+setConsoleInput input console =
+    { console | input = input }
+
+
+addToHistory : String -> Console -> Console
+addToHistory string console =
+    { console | history = string :: console.history }
+
+
+toggleConsole : Console -> Console
+toggleConsole console =
+    { console | visible = not console.visible }
+
+
+
 -- PLAYER
 
 
@@ -79,6 +110,7 @@ type alias Tile =
 type alias Model =
     { player : Player
     , map : Grid Tile
+    , console : Console
     , lastChunk : Point
     , camera : Camera
     , editMode : Bool
@@ -95,6 +127,7 @@ init _ =
     ( Model
         (Player ( 0, 0 ) [] 200)
         Grid.empty
+        initConsole
         ( 0, 0 )
         Render.newCamera
         False
@@ -210,6 +243,8 @@ type Msg
     | BrushRadiusInput Int
     | EraserInput Bool
     | ClickedTile Point
+    | ConsoleInput String
+    | ConsoleSubmit
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -281,6 +316,9 @@ update msg model =
                         |> Cmd.batch
                     )
 
+                "c" ->
+                    ( { model | console = toggleConsole model.console }, Cmd.none )
+
                 _ ->
                     ( { model | keyState = key :: model.keyState }, Cmd.none )
 
@@ -326,9 +364,65 @@ update msg model =
             , Cmd.none
             )
 
+        ConsoleInput input ->
+            ( { model | console = setConsoleInput input model.console }, Cmd.none )
+
+        ConsoleSubmit ->
+            let
+                x =
+                    case String.split " " model.console.input of
+                        [ "export" ] ->
+                            "export map"
+
+                        [ "loadChunk", qString, rString ] ->
+                            case ( String.toInt qString, String.toInt rString ) of
+                                ( Just q, Just r ) ->
+                                    "Load chunk: " ++ String.fromInt q ++ " " ++ String.fromInt r
+
+                                _ ->
+                                    "loadChunk: invalid arguments"
+
+                        _ ->
+                            "unknown command"
+            in
+            ( { model
+                | console =
+                    model.console
+                        |> setConsoleInput ""
+                        |> addToHistory model.console.input
+                        |> addToHistory x
+              }
+            , Cmd.none
+            )
+
 
 
 -- VIEW
+
+
+viewConsole : Console -> Html Msg
+viewConsole console =
+    let
+        viewHistoryItem string =
+            Html.p [] [ Html.text string ]
+    in
+    Html.aside
+        [ Html.Attributes.classList
+            [ ( "console", True )
+            , ( "visible", console.visible )
+            ]
+        ]
+        [ Html.div [ Html.Attributes.class "history" ] (List.map viewHistoryItem console.history)
+        , Html.div [ Html.Attributes.class "input" ]
+            [ Html.input
+                [ Html.Attributes.class "command-input"
+                , Html.Attributes.value console.input
+                , Html.Events.onInput ConsoleInput
+                ]
+                []
+            , Html.button [ Html.Attributes.class "submit-button", Html.Events.onClick ConsoleSubmit ] [ Html.text "Go!" ]
+            ]
+        ]
 
 
 viewTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
@@ -451,7 +545,8 @@ view model =
     main_
         [ Html.Attributes.id "game"
         ]
-        [ Render.svg [ Svg.Attributes.class "game-svg" ]
+        [ viewConsole model.console
+        , Render.svg [ Svg.Attributes.class "game-svg" ]
             [ Render.camera model.camera
                 [ Svg.Attributes.class "camera" ]
                 [ Svg.g [] (model.map |> Grid.getTiles |> List.map (viewTile []))
