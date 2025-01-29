@@ -157,9 +157,9 @@ camera cam attrs children =
         cameraTransform =
             Svg.Attributes.style
                 ("transform: translate("
-                    ++ String.fromFloat -(cam.x * cam.zoom)
+                    ++ String.fromInt -(cam.x * cam.zoom |> round)
                     ++ "px, "
-                    ++ String.fromFloat -(cam.y * cam.zoom)
+                    ++ String.fromInt -(cam.y * cam.zoom |> round)
                     ++ "px) scale("
                     ++ String.fromFloat cam.zoom
                     ++ ")"
