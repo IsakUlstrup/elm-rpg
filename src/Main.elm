@@ -4,7 +4,7 @@ import Browser
 import Browser.Events
 import Engine.Grid as Grid exposing (Grid)
 import Engine.Point as Point exposing (Point)
-import Engine.Render as Render
+import Engine.Render as Render exposing (Camera)
 import File.Download as Download
 import Html exposing (Html, main_)
 import Html.Attributes
@@ -15,15 +15,6 @@ import Random
 import Svg exposing (Svg)
 import Svg.Attributes
 import Svg.Events
-
-
-
--- CONSTANTS
-
-
-zoom : Float
-zoom =
-    0.7
 
 
 
@@ -42,8 +33,7 @@ type alias Model =
     { seed : Random.Seed
     , map : Grid Tile
     , lastChunk : Point
-    , cameraPosition : Point
-    , cameraHeight : Int
+    , camera : Camera
     , editMode : Bool
     }
 
@@ -54,8 +44,7 @@ init _ =
         (Random.initialSeed 32)
         Grid.empty
         ( 0, 0 )
-        ( 0, 0 )
-        0
+        Render.newCamera
         False
     , requestNeighbourChunks ( 0, 0 )
     )
@@ -88,20 +77,15 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ClickedTile height position ->
-            ( { model
-                | cameraPosition = position
-                , cameraHeight = height
-
-                -- , entities = Dict.update 0 (Maybe.map (\e -> { e | position = position, height = height })) model.entities
-              }
+        ClickedTile _ _ ->
+            ( model
             , Cmd.none
             )
 
         Tick _ ->
             let
                 chunkPosition =
-                    Grid.pointToChunk model.cameraPosition
+                    Grid.pointToChunk (Point.fromFloat ( model.camera.x, model.camera.y ))
             in
             if chunkPosition /= model.lastChunk then
                 ( { model
@@ -267,6 +251,10 @@ viewGhostTile attrs ( position, tile ) =
 
 view : Model -> Html Msg
 view model =
+    let
+        cameraPoint =
+            Point.fromFloat ( model.camera.x, model.camera.y )
+    in
     main_
         [ Html.Attributes.id "game"
         ]
@@ -275,19 +263,17 @@ view model =
             , Html.button [ Html.Events.onClick ClickedToggleEditMode ] [ Html.text "toggle edit mode" ]
             ]
         , Render.svg [ Svg.Attributes.class "game-svg" ]
-            [ Render.pointHeightCamera [ Svg.Attributes.class "camera" ]
+            [ Render.camera model.camera
+                [ Svg.Attributes.class "camera" ]
                 [ Svg.g [] (model.map |> Grid.getTiles |> List.map (viewTile []))
                 , Svg.g []
                     (if model.editMode then
-                        Point.circle 5 model.cameraPosition |> List.map (\pos -> ( pos, () )) |> List.map (viewGhostTile [])
+                        Point.circle 5 cameraPoint |> List.map (\pos -> ( pos, () )) |> List.map (viewGhostTile [])
 
                      else
                         []
                     )
                 ]
-                model.cameraPosition
-                model.cameraHeight
-                zoom
             ]
         ]
 

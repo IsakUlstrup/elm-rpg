@@ -3,6 +3,7 @@ module Engine.Point exposing
     , add
     , circle
     , distance
+    , fromFloat
     , isValid
     , neighbours
     , scale
@@ -24,28 +25,31 @@ toString ( q, r ) =
     "(" ++ String.fromInt q ++ ", " ++ String.fromInt r ++ ")"
 
 
+{-| Create a new point from float values, round to nearest valid point
+-}
+fromFloat : ( Float, Float ) -> Point
+fromFloat ( x, y ) =
+    let
+        z : Float
+        z =
+            -x - y
 
--- {-| Create a new point from float values, round to nearest valid point
--- -}
--- fromFloat : ( Float, Float ) -> Point
--- fromFloat ( x, y ) =
---     let
---         z : Float
---         z =
---             -x - y
---         -- rounded point
---         ( rx, ry, rz ) =
---             ( round x, round y, round z )
---         -- diierence between input point and rounded point
---         ( dx, dy, dz ) =
---             ( abs (toFloat rx - x), abs (toFloat ry - y), abs (toFloat rz - z) )
---     in
---     if dx > dy && dx > dz then
---         ( -ry - rz, ry )
---     else if dy > dz then
---         ( rx, -rx - rz )
---     else
---         ( rx, ry )
+        -- rounded point
+        ( rx, ry, rz ) =
+            ( round x, round y, round z )
+
+        -- diierence between input point and rounded point
+        ( dx, dy, dz ) =
+            ( abs (toFloat rx - x), abs (toFloat ry - y), abs (toFloat rz - z) )
+    in
+    if dx > dy && dx > dz then
+        ( -ry - rz, ry )
+
+    else if dy > dz then
+        ( rx, -rx - rz )
+
+    else
+        ( rx, ry )
 
 
 {-| Check if point is valid
