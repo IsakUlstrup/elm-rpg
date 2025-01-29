@@ -301,18 +301,7 @@ update msg model =
 
         PressedKey key ->
             case key of
-                " " ->
-                    ( { model | editMode = not model.editMode }, Cmd.none )
-
-                "e" ->
-                    ( model
-                    , model.map
-                        |> Codec.encodeChunks
-                        |> List.map (\( name, data ) -> Download.string name "text/json" data)
-                        |> Cmd.batch
-                    )
-
-                "c" ->
+                "0" ->
                     ( { model | console = toggleConsole model.console }, Cmd.none )
 
                 _ ->
@@ -364,32 +353,32 @@ update msg model =
             ( { model | console = setConsoleInput input model.console }, Cmd.none )
 
         ConsoleSubmit ->
-            let
-                x =
-                    case String.split " " model.console.input of
-                        [ "export" ] ->
-                            "export map"
+            model
+                |> (\m ->
+                        case String.split " " m.console.input of
+                            [ "export" ] ->
+                                ( m
+                                , m.map
+                                    |> Codec.encodeChunks
+                                    |> List.map (\( name, data ) -> Download.string name "text/json" data)
+                                    |> Cmd.batch
+                                )
 
-                        [ "loadChunk", qString, rString ] ->
-                            case ( String.toInt qString, String.toInt rString ) of
-                                ( Just q, Just r ) ->
-                                    "Load chunk: " ++ String.fromInt q ++ " " ++ String.fromInt r
+                            [ "editor" ] ->
+                                ( { m | editMode = not m.editMode }, Cmd.none )
 
-                                _ ->
-                                    "loadChunk: invalid arguments"
-
-                        _ ->
-                            "unknown command"
-            in
-            ( { model
-                | console =
-                    model.console
-                        |> setConsoleInput ""
-                        |> addToHistory model.console.input
-                        |> addToHistory x
-              }
-            , Cmd.none
-            )
+                            _ ->
+                                -- "unknown command"
+                                ( { m
+                                    | console =
+                                        m.console
+                                            |> setConsoleInput ""
+                                            |> addToHistory m.console.input
+                                            |> addToHistory "unknown command"
+                                  }
+                                , Cmd.none
+                                )
+                   )
 
 
 
