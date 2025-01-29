@@ -9,6 +9,7 @@ import Engine.Render as Render exposing (Camera)
 import File.Download as Download
 import Html exposing (Html, main_)
 import Html.Attributes
+import Html.Events
 import Json.Decode as Decode exposing (Decoder)
 import Ports
 import Random
@@ -90,6 +91,7 @@ type Msg
     | MouseDown Point
     | MouseOver Point
     | MouseUp
+    | BrushRadiusInput Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -197,6 +199,9 @@ update msg model =
             , Cmd.none
             )
 
+        BrushRadiusInput radius ->
+            ( { model | brushSize = radius }, Cmd.none )
+
 
 
 -- VIEW
@@ -257,6 +262,26 @@ viewGhostTile attrs ( position, tile ) =
         ]
 
 
+viewEditorToolbar : Bool -> Int -> Html Msg
+viewEditorToolbar enabled brushRadius =
+    Html.div []
+        (if enabled then
+            [ Html.text ("Brush radius " ++ String.fromInt brushRadius)
+            , Html.input
+                [ Html.Attributes.type_ "range"
+                , Html.Attributes.min "1"
+                , Html.Attributes.max "10"
+                , Html.Attributes.value (String.fromInt brushRadius)
+                , Html.Events.onInput (String.toInt >> Maybe.withDefault brushRadius >> BrushRadiusInput)
+                ]
+                []
+            ]
+
+         else
+            []
+        )
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -281,6 +306,7 @@ view model =
                 ]
             , Svg.circle [ Svg.Attributes.r "5", Svg.Attributes.opacity "0.2" ] []
             ]
+        , viewEditorToolbar model.editMode model.brushSize
         ]
 
 
