@@ -4,6 +4,7 @@ import Browser
 import Browser.Events
 import Engine.Codec as Codec
 import Engine.Grid as Grid exposing (Grid)
+import Engine.Path exposing (Path)
 import Engine.Point as Point exposing (Point)
 import Engine.Render as Render exposing (Camera)
 import File.Download as Download
@@ -12,10 +13,55 @@ import Html.Attributes
 import Html.Events
 import Json.Decode as Decode exposing (Decoder)
 import Ports
-import Random
 import Svg exposing (Svg)
 import Svg.Attributes
 import Svg.Events
+
+
+
+-- PLAYER
+
+
+type alias Player =
+    { position : Point
+    , path : List Point
+    , moveCooldown : Int
+    }
+
+
+tickPlayer : Float -> Player -> Player
+tickPlayer dt player =
+    { player | moveCooldown = player.moveCooldown - round dt |> max 0 }
+
+
+pathfind : (Point -> Point -> Bool) -> Point -> Player -> Player
+pathfind canMove2 target entity =
+    let
+        path : Maybe (List Point)
+        path =
+            Engine.Path.pathfind canMove2 entity.position target
+                |> .path
+    in
+    case path of
+        Just validPath ->
+            { entity | path = validPath }
+
+        Nothing ->
+            entity
+
+
+movePlayer : Player -> Player
+movePlayer entity =
+    case ( entity.path, entity.moveCooldown ) of
+        ( p :: ps, 0 ) ->
+            { entity
+                | position = p
+                , path = ps
+                , moveCooldown = 200
+            }
+
+        _ ->
+            entity
 
 
 
@@ -31,7 +77,7 @@ type alias Tile =
 
 
 type alias Model =
-    { seed : Random.Seed
+    { player : Player
     , map : Grid Tile
     , lastChunk : Point
     , camera : Camera
@@ -47,7 +93,7 @@ type alias Model =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
-        (Random.initialSeed 32)
+        (Player ( 0, 0 ) [] 200)
         Grid.empty
         ( 0, 0 )
         Render.newCamera
@@ -59,6 +105,20 @@ init _ =
         []
     , requestNeighbourChunks ( 0, 0 ) Grid.empty
     )
+
+
+canMove : Grid Tile -> Point -> Point -> Bool
+canMove tiles from to =
+    case
+        ( Grid.get from tiles
+        , Grid.get to tiles
+        )
+    of
+        ( Just _, Just _ ) ->
+            True
+
+        _ ->
+            False
 
 
 requestNeighbourChunks : Point -> Grid Tile -> Cmd Msg
@@ -146,28 +206,38 @@ type Msg
     | MouseUp
     | BrushRadiusInput Int
     | EraserInput Bool
+    | ClickedTile Point
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick dt ->
-            let
-                chunkPosition =
-                    Grid.pointToChunk (Render.cameraToPoint model.camera)
-            in
-            if chunkPosition /= model.lastChunk then
-                ( { model
-                    | lastChunk = chunkPosition
-                    , map = Grid.removeOutsideNeighbours chunkPosition model.map
-                  }
-                , requestNeighbourChunks chunkPosition model.map
-                )
+            model
+                |> (\m ->
+                        { m | camera = m.camera |> cameraInput dt m.keyState }
+                   )
+                |> (\m ->
+                        { m | player = m.player |> tickPlayer dt |> movePlayer }
+                   )
+                |> (\m ->
+                        let
+                            chunkPosition =
+                                Grid.pointToChunk (Render.cameraToPoint m.camera)
+                        in
+                        if chunkPosition /= m.lastChunk then
+                            ( { m
+                                | lastChunk = chunkPosition
+                                , map = Grid.removeOutsideNeighbours chunkPosition m.map
+                              }
+                            , requestNeighbourChunks chunkPosition m.map
+                            )
 
-            else
-                ( { model | camera = model.camera |> cameraInput dt model.keyState }
-                , Cmd.none
-                )
+                        else
+                            ( { m | camera = m.camera |> cameraInput dt m.keyState }
+                            , Cmd.none
+                            )
+                   )
 
         GotChunk chunk ->
             case chunk.tiles of
@@ -247,6 +317,11 @@ update msg model =
         EraserInput flag ->
             ( { model | eraser = flag }, Cmd.none )
 
+        ClickedTile position ->
+            ( { model | player = pathfind (canMove model.map) position model.player }
+            , Cmd.none
+            )
+
 
 
 -- VIEW
@@ -267,6 +342,7 @@ viewTile attrs ( position, tile ) =
     Svg.g
         ([ Render.hexTransform position
          , Svg.Attributes.class "tile"
+         , Svg.Events.onClick (ClickedTile position)
          ]
             ++ attrs
         )
@@ -345,6 +421,17 @@ viewEditorToolbar enabled brushRadius =
         )
 
 
+viewPlayer : Player -> Svg msg
+viewPlayer player =
+    Svg.circle
+        [ Render.hexTransform player.position
+        , Svg.Attributes.r "50"
+        , Svg.Attributes.fill "lightblue"
+        , Svg.Attributes.class "player"
+        ]
+        []
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -371,6 +458,7 @@ view model =
                     , Svg.Attributes.pointerEvents "none"
                     ]
                 , viewBrushPreview model.brushSize model.hoverPoint
+                , viewPlayer model.player
                 ]
             , Svg.circle
                 [ Svg.Attributes.r "5"

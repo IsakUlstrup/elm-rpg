@@ -29,3 +29,7 @@ body {
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     shape-rendering: optimizeSpeed;
 }
+
+.player {
+    transition: transform 200ms;
+}

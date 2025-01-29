@@ -4,6 +4,7 @@ module Engine.Grid exposing
     , chunkSize
     , chunksToList
     , empty
+    , get
     , getTiles
     , insert
     , insertList
@@ -117,6 +118,17 @@ getTiles (Grid grid) =
     grid
         |> Dict.toList
         |> List.concatMap (\( _, chunk ) -> Dict.toList chunk)
+
+
+get : Point -> Grid a -> Maybe a
+get position (Grid grid) =
+    let
+        pos =
+            position
+                |> pointToChunk
+    in
+    Dict.get pos grid
+        |> Maybe.andThen (Dict.get position)
 
 
 chunkNeighbours : Int -> Point -> List Point
