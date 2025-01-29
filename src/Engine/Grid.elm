@@ -10,6 +10,8 @@ module Engine.Grid exposing
     , insertList
     , map
     , pointToChunk
+    , remove
+    , removeList
     , updateNeighbours
     )
 
@@ -64,6 +66,17 @@ insert position tile (Grid grid) =
         |> Grid
 
 
+remove : Point -> Grid a -> Grid a
+remove position (Grid grid) =
+    let
+        chunkPos =
+            pointToChunk position
+    in
+    grid
+        |> Dict.update chunkPos (Maybe.map (Dict.remove position))
+        |> Grid
+
+
 insertNoReplace : Point -> a -> Grid a -> Grid a
 insertNoReplace position tile (Grid grid) =
     let
@@ -92,6 +105,11 @@ insertNoReplace position tile (Grid grid) =
 insertList : List ( Point, a ) -> Grid a -> Grid a
 insertList tiles grid =
     List.foldl (\( pos, tile ) g -> insertNoReplace pos tile g) grid tiles
+
+
+removeList : List Point -> Grid a -> Grid a
+removeList tiles grid =
+    List.foldl (\pos g -> remove pos g) grid tiles
 
 
 getTiles : Grid a -> List ( Point, a )

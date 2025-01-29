@@ -39,6 +39,7 @@ type alias Model =
     , pointerDown : Bool
     , brushSize : Int
     , hoverPoint : Point
+    , eraser : Bool
     }
 
 
@@ -53,6 +54,7 @@ init _ =
         False
         1
         ( 0, 0 )
+        False
     , requestNeighbourChunks ( 0, 0 )
     )
 
@@ -68,8 +70,8 @@ requestNeighbourChunks position =
         |> Cmd.batch
 
 
-applyBrush : Point -> Model -> Model
-applyBrush position model =
+applyBrush : Bool -> Point -> Model -> Model
+applyBrush erase position model =
     let
         brush =
             Point.circle model.brushSize position
@@ -77,9 +79,11 @@ applyBrush position model =
         tiles =
             List.map (\pos -> ( pos, () )) brush
     in
-    { model
-        | map = model.map |> Grid.insertList tiles
-    }
+    if erase then
+        { model | map = model.map |> Grid.removeList brush }
+
+    else
+        { model | map = model.map |> Grid.insertList tiles }
 
 
 
@@ -94,6 +98,7 @@ type Msg
     | MouseOver Point
     | MouseUp
     | BrushRadiusInput Int
+    | EraserInput Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -180,7 +185,7 @@ update msg model =
                 { model
                     | pointerDown = True
                 }
-                    |> applyBrush position
+                    |> applyBrush model.eraser position
 
               else
                 model
@@ -194,7 +199,7 @@ update msg model =
 
         MouseOver position ->
             ( if model.editMode && model.pointerDown then
-                { model | hoverPoint = position } |> applyBrush position
+                { model | hoverPoint = position } |> applyBrush model.eraser position
 
               else
                 { model | hoverPoint = position }
@@ -203,6 +208,9 @@ update msg model =
 
         BrushRadiusInput radius ->
             ( { model | brushSize = radius }, Cmd.none )
+
+        EraserInput flag ->
+            ( { model | eraser = flag }, Cmd.none )
 
 
 
@@ -292,6 +300,8 @@ viewEditorToolbar enabled brushRadius =
                 , Html.Events.onInput (String.toInt >> Maybe.withDefault brushRadius >> BrushRadiusInput)
                 ]
                 []
+            , Html.button [ Html.Events.onClick (EraserInput False) ] [ Html.text "Brush" ]
+            , Html.button [ Html.Events.onClick (EraserInput True) ] [ Html.text "Eraser" ]
             ]
 
          else
@@ -319,10 +329,19 @@ view model =
                      else
                         []
                     )
-                , Render.viewHardcodedHex [ Render.hexTransform cameraPoint, Svg.Attributes.opacity "0.2" ]
+                , Render.viewHardcodedHex
+                    [ Render.hexTransform cameraPoint
+                    , Svg.Attributes.opacity "0.2"
+                    , Svg.Attributes.pointerEvents "none"
+                    ]
                 , viewBrushPreview model.brushSize model.hoverPoint
                 ]
-            , Svg.circle [ Svg.Attributes.r "5", Svg.Attributes.opacity "0.2" ] []
+            , Svg.circle
+                [ Svg.Attributes.r "5"
+                , Svg.Attributes.opacity "0.2"
+                , Svg.Attributes.pointerEvents "none"
+                ]
+                []
             ]
         , viewEditorToolbar model.editMode model.brushSize
         ]
