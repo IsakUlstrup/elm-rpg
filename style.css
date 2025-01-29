@@ -33,6 +33,7 @@ body {
         display: flex;
         flex-direction: column-reverse;
         justify-content: flex-start;
+        overflow-y: auto;
     }
 
     input {
