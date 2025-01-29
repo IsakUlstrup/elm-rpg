@@ -74,4 +74,5 @@ body {
 
 .player {
     transition: transform 200ms;
+    image-rendering: pixelated;
 }

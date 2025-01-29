@@ -511,10 +511,16 @@ viewEditorToolbar enabled brushRadius =
 
 viewPlayer : Player -> Svg msg
 viewPlayer player =
-    Svg.circle
+    Svg.image
         [ Render.hexTransform player.position
-        , Svg.Attributes.r "50"
-        , Svg.Attributes.fill "#626262"
+
+        -- , Svg.Attributes.r "50"
+        -- , Svg.Attributes.fill "#626262"
+        , Svg.Attributes.xlinkHref "character.png"
+        , Svg.Attributes.width "150"
+        , Svg.Attributes.height "150"
+        , Svg.Attributes.x "-75"
+        , Svg.Attributes.y "-100"
         , Svg.Attributes.class "player"
         ]
         []
