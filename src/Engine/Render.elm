@@ -78,10 +78,10 @@ cameraToPoint : Camera -> Point
 cameraToPoint cam =
     let
         q =
-            ((2 / 3 * cam.x) / hexSize) * (1 / cam.zoom)
+            (2 / 3 * cam.x) / hexSize
 
         r =
-            ((-1 / 3 * cam.x + sqrt 3 / 3 * cam.y) / hexSize) * (1 / cam.zoom)
+            (-1 / 3 * cam.x + sqrt 3 / 3 * cam.y) / hexSize
     in
     Point.fromFloat ( r, q )
 
@@ -157,9 +157,9 @@ camera cam attrs children =
         cameraTransform =
             Svg.Attributes.style
                 ("transform: translate("
-                    ++ String.fromFloat -cam.x
+                    ++ String.fromFloat -(cam.x * cam.zoom)
                     ++ "px, "
-                    ++ String.fromFloat -cam.y
+                    ++ String.fromFloat -(cam.y * cam.zoom)
                     ++ "px) scale("
                     ++ String.fromFloat cam.zoom
                     ++ ")"
