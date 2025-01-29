@@ -40,6 +40,7 @@ type alias Model =
     , brushSize : Int
     , hoverPoint : Point
     , eraser : Bool
+    , keyState : List String
     }
 
 
@@ -55,6 +56,7 @@ init _ =
         1
         ( 0, 0 )
         False
+        []
     , requestNeighbourChunks ( 0, 0 ) Grid.empty
     )
 
@@ -83,6 +85,53 @@ applyBrush erase position model =
         { model | map = model.map |> Grid.insertList tiles }
 
 
+cameraInput : Float -> List String -> Camera -> Camera
+cameraInput dt keys camera =
+    camera
+        |> (\cam ->
+                if List.member "ArrowLeft" keys then
+                    Render.moveCameraX (-1 * dt) cam
+
+                else
+                    cam
+           )
+        |> (\cam ->
+                if List.member "ArrowRight" keys then
+                    Render.moveCameraX (1 * dt) cam
+
+                else
+                    cam
+           )
+        |> (\cam ->
+                if List.member "ArrowUp" keys then
+                    Render.moveCameraY (-1 * dt) cam
+
+                else
+                    cam
+           )
+        |> (\cam ->
+                if List.member "ArrowDown" keys then
+                    Render.moveCameraY (1 * dt) cam
+
+                else
+                    cam
+           )
+        |> (\cam ->
+                if List.member "-" keys then
+                    Render.zoomCamera (-0.001 * dt) cam
+
+                else
+                    cam
+           )
+        |> (\cam ->
+                if List.member "+" keys then
+                    Render.zoomCamera (0.001 * dt) cam
+
+                else
+                    cam
+           )
+
+
 
 -- UPDATE
 
@@ -91,6 +140,7 @@ type Msg
     = Tick Float
     | GotChunk Ports.Chunk
     | PressedKey String
+    | ReleasedKey String
     | MouseDown Point
     | MouseOver Point
     | MouseUp
@@ -101,7 +151,7 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Tick _ ->
+        Tick dt ->
             let
                 chunkPosition =
                     Grid.pointToChunk (Render.cameraToPoint model.camera)
@@ -115,7 +165,7 @@ update msg model =
                 )
 
             else
-                ( model
+                ( { model | camera = model.camera |> cameraInput dt model.keyState }
                 , Cmd.none
                 )
 
@@ -146,24 +196,18 @@ update msg model =
 
         PressedKey key ->
             case key of
-                "ArrowLeft" ->
-                    ( { model | camera = Render.moveCameraX -100 model.camera }, Cmd.none )
-
-                "ArrowRight" ->
-                    ( { model | camera = Render.moveCameraX 100 model.camera }, Cmd.none )
-
-                "ArrowUp" ->
-                    ( { model | camera = Render.moveCameraY -100 model.camera }, Cmd.none )
-
-                "ArrowDown" ->
-                    ( { model | camera = Render.moveCameraY 100 model.camera }, Cmd.none )
-
-                "-" ->
-                    ( { model | camera = Render.zoomCamera -0.1 model.camera }, Cmd.none )
-
-                "+" ->
-                    ( { model | camera = Render.zoomCamera 0.1 model.camera }, Cmd.none )
-
+                -- "ArrowLeft" ->
+                --     ( { model | camera = Render.moveCameraX -100 model.camera }, Cmd.none )
+                -- "ArrowRight" ->
+                --     ( { model | camera = Render.moveCameraX 100 model.camera }, Cmd.none )
+                -- "ArrowUp" ->
+                --     ( { model | camera = Render.moveCameraY -100 model.camera }, Cmd.none )
+                -- "ArrowDown" ->
+                --     ( { model | camera = Render.moveCameraY 100 model.camera }, Cmd.none )
+                -- "-" ->
+                --     ( { model | camera = Render.zoomCamera -0.1 model.camera }, Cmd.none )
+                -- "+" ->
+                --     ( { model | camera = Render.zoomCamera 0.1 model.camera }, Cmd.none )
                 " " ->
                     ( { model | editMode = not model.editMode }, Cmd.none )
 
@@ -176,7 +220,12 @@ update msg model =
                     )
 
                 _ ->
-                    ( model, Cmd.none )
+                    ( { model | keyState = key :: model.keyState }, Cmd.none )
+
+        ReleasedKey key ->
+            ( { model | keyState = List.filter ((/=) key) model.keyState }
+            , Cmd.none
+            )
 
         MouseDown position ->
             ( if model.editMode then
@@ -353,15 +402,16 @@ subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ Ports.gotChunk GotChunk
-        , Browser.Events.onKeyDown keyDecoder
+        , Browser.Events.onKeyDown (keyDecoder PressedKey)
+        , Browser.Events.onKeyUp (keyDecoder ReleasedKey)
         , Browser.Events.onMouseUp (Decode.succeed MouseUp)
         , Browser.Events.onAnimationFrameDelta Tick
         ]
 
 
-keyDecoder : Decoder Msg
-keyDecoder =
-    Decode.map PressedKey (Decode.field "key" Decode.string)
+keyDecoder : (String -> msg) -> Decoder msg
+keyDecoder msg =
+    Decode.map msg (Decode.field "key" Decode.string)
 
 
 
