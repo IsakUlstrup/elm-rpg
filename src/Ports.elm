@@ -1,4 +1,4 @@
-port module Ports exposing (Chunk, gotChunk, requestChunk)
+port module Ports exposing (Chunk, Tile, gotChunk, requestChunk)
 
 import Engine.Point exposing (Point)
 

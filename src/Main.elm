@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg, main)
+module Main exposing (Model, Msg, Player, Tile, main)
 
 import Browser
 import Browser.Events
@@ -132,16 +132,19 @@ requestNeighbourChunks position grid =
 applyBrush : Bool -> Point -> Model -> Model
 applyBrush erase position model =
     let
+        brush : List Point
         brush =
             Point.circle model.brushSize position
-
-        tiles =
-            List.map (\pos -> ( pos, () )) brush
     in
     if erase then
         { model | map = model.map |> Grid.removeList brush }
 
     else
+        let
+            tiles : List ( Point, Tile )
+            tiles =
+                List.map (\pos -> ( pos, () )) brush
+        in
         { model | map = model.map |> Grid.insertList tiles }
 
 
@@ -157,7 +160,7 @@ cameraInput dt keys camera =
            )
         |> (\cam ->
                 if List.member "ArrowRight" keys then
-                    Render.moveCameraX (1 * dt) cam
+                    Render.moveCameraX dt cam
 
                 else
                     cam
@@ -171,7 +174,7 @@ cameraInput dt keys camera =
            )
         |> (\cam ->
                 if List.member "ArrowDown" keys then
-                    Render.moveCameraY (1 * dt) cam
+                    Render.moveCameraY dt cam
 
                 else
                     cam
@@ -222,6 +225,7 @@ update msg model =
                    )
                 |> (\m ->
                         let
+                            chunkPosition : Point
                             chunkPosition =
                                 Grid.pointToChunk (Render.cameraToPoint m.camera)
                         in
@@ -328,14 +332,17 @@ update msg model =
 
 
 viewTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
-viewTile attrs ( position, tile ) =
+viewTile attrs ( position, _ ) =
     let
+        chunkPos : Point
         chunkPos =
             Grid.pointToChunk position
 
+        tileHue : Int
         tileHue =
             Point.uniqueId chunkPos * 100
 
+        fillColor : Int -> Int -> Svg.Attribute msg
         fillColor saturation level =
             Svg.Attributes.fill ("hsl(" ++ String.fromInt tileHue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
     in
@@ -369,7 +376,7 @@ viewTile attrs ( position, tile ) =
 
 
 viewGhostTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
-viewGhostTile attrs ( position, tile ) =
+viewGhostTile attrs ( position, _ ) =
     Svg.g
         ([ Render.hexTransform position
          , Svg.Attributes.class "tile"
@@ -387,9 +394,11 @@ viewGhostTile attrs ( position, tile ) =
 viewBrushPreview : Int -> Point -> Svg Msg
 viewBrushPreview brushRadius position =
     let
+        brush : List Point
         brush =
             Point.circle brushRadius position
 
+        viewPreviewTile : Point -> Svg msg
         viewPreviewTile tilePosition =
             Render.viewHardcodedHex
                 [ Svg.Attributes.fill "rgba(255, 255, 255, 0.2)"
@@ -435,6 +444,7 @@ viewPlayer player =
 view : Model -> Html Msg
 view model =
     let
+        cameraPoint : Point
         cameraPoint =
             Render.cameraToPoint model.camera
     in

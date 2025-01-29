@@ -6,12 +6,9 @@ module Engine.Render exposing
     , moveCameraX
     , moveCameraY
     , newCamera
-    , pointCamera
-    , pointToPixel
     , svg
     , viewDebugPath
     , viewHardcodedHex
-    , viewHex
     , viewValidPath
     , zoomCamera
     )
@@ -77,9 +74,11 @@ pointToPixel ( q, r ) =
 cameraToPoint : Camera -> Point
 cameraToPoint cam =
     let
+        q : Float
         q =
             (2 / 3 * cam.x) / hexSize
 
+        r : Float
         r =
             (-1 / 3 * cam.x + sqrt 3 / 3 * cam.y) / hexSize
     in
@@ -163,27 +162,6 @@ camera cam attrs children =
                     ++ "px) scale("
                     ++ String.fromFloat cam.zoom
                     ++ ")"
-                )
-    in
-    Svg.g (cameraTransform :: attrs) children
-
-
-{-| Camera element
--}
-pointCamera : List (Attribute msg) -> List (Svg msg) -> Point -> Svg msg
-pointCamera attrs children position =
-    let
-        ( x, y ) =
-            pointToPixel position
-
-        cameraTransform : Attribute msg
-        cameraTransform =
-            Svg.Attributes.style
-                ("transform: translate("
-                    ++ String.fromFloat -x
-                    ++ "px, "
-                    ++ String.fromFloat -y
-                    ++ "px)"
                 )
     in
     Svg.g (cameraTransform :: attrs) children

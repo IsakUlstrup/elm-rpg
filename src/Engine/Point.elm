@@ -66,6 +66,7 @@ uniqueId : Point -> Int
 uniqueId ( q, r ) =
     let
         -- Map integers to non-negative integers
+        mapToNonNegative : Int -> Int
         mapToNonNegative n =
             if n >= 0 then
                 2 * n
@@ -74,13 +75,16 @@ uniqueId ( q, r ) =
                 -2 * n - 1
 
         -- Apply the mapping
+        nq : Int
         nq =
             mapToNonNegative q
 
+        nr : Int
         nr =
             mapToNonNegative r
 
         -- Apply the Cantor pairing function
+        sum : Int
         sum =
             nq + nr
     in
