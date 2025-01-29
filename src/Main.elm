@@ -297,11 +297,7 @@ update msg model =
                     ( { model | map = Grid.insertList formatedTiles model.map }, Cmd.none )
 
                 Nothing ->
-                    -- let
-                    --     _ =
-                    --         Debug.log "Elm: chunk not found" chunk
-                    -- in
-                    ( model, Cmd.none )
+                    ( { model | console = addToHistory ("Chunk not found: " ++ Point.toString ( chunk.q, chunk.r )) model.console }, Cmd.none )
 
         PressedKey key ->
             case key of
