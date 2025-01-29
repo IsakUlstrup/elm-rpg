@@ -193,7 +193,7 @@ ring center radius =
 circle : Int -> Point -> List Point
 circle radius center =
     center
-        :: (List.range 0 radius
+        :: (List.range 0 (radius - 1)
                 |> List.concatMap (ring center)
            )
 

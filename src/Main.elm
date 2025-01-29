@@ -36,6 +36,7 @@ type alias Model =
     , camera : Camera
     , editMode : Bool
     , pointerDown : Bool
+    , brushSize : Int
     }
 
 
@@ -48,6 +49,7 @@ init _ =
         Render.newCamera
         False
         False
+        1
     , requestNeighbourChunks ( 0, 0 )
     )
 
@@ -63,6 +65,20 @@ requestNeighbourChunks position =
         |> Cmd.batch
 
 
+applyBrush : Point -> Model -> Model
+applyBrush position model =
+    let
+        brush =
+            Point.circle model.brushSize position
+
+        tiles =
+            List.map (\pos -> ( pos, () )) brush
+    in
+    { model
+        | map = model.map |> Grid.insertList tiles
+    }
+
+
 
 -- UPDATE
 
@@ -70,7 +86,6 @@ requestNeighbourChunks position =
 type Msg
     = Tick Float
     | GotChunk Ports.Chunk
-    | ClickedGhostTile Point
     | PressedKey String
     | MouseDown Point
     | MouseOver Point
@@ -122,11 +137,6 @@ update msg model =
                     -- in
                     ( model, Cmd.none )
 
-        ClickedGhostTile position ->
-            ( { model | map = model.map |> Grid.insert position () }
-            , Cmd.none
-            )
-
         PressedKey key ->
             case key of
                 "ArrowLeft" ->
@@ -164,9 +174,9 @@ update msg model =
         MouseDown position ->
             ( if model.editMode then
                 { model
-                    | map = model.map |> Grid.insert position ()
-                    , pointerDown = True
+                    | pointerDown = True
                 }
+                    |> applyBrush position
 
               else
                 model
@@ -174,11 +184,13 @@ update msg model =
             )
 
         MouseUp ->
-            ( { model | pointerDown = False }, Cmd.none )
+            ( { model | pointerDown = False }
+            , Cmd.none
+            )
 
         MouseOver position ->
             ( if model.editMode && model.pointerDown then
-                { model | map = model.map |> Grid.insert position () }
+                model |> applyBrush position
 
               else
                 model
