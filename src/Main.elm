@@ -88,7 +88,7 @@ movePlayer entity =
             { entity
                 | position = p
                 , path = ps
-                , moveCooldown = 200
+                , moveCooldown = 400
             }
 
         _ ->
