@@ -76,3 +76,11 @@ body {
     transition: transform 400ms linear;
     image-rendering: pixelated;
 }
+
+.path {
+    fill: none;
+    stroke: beige;
+    stroke-dasharray: 1 50;
+    stroke-width: 20;
+    stroke-linecap: round;
+}
