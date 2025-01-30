@@ -236,6 +236,7 @@ viewValidPath positions =
         points : String
         points =
             positions
+                |> List.reverse
                 |> List.map (pointToPixel >> Tuple.mapBoth round round)
                 |> List.map (\( q, r ) -> String.fromInt q ++ "," ++ String.fromInt r)
                 |> String.join " "
