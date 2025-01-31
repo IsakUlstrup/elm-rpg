@@ -35,7 +35,7 @@ chunkSize =
 
 drawDistance : Int
 drawDistance =
-    2
+    1
 
 
 
