@@ -411,20 +411,30 @@ viewConsole console =
 
 
 viewSpriteTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
-viewSpriteTile attrs ( position, _ ) =
-    Svg.g
-        (Render.hexTransform position :: attrs)
+viewSpriteTile _ ( position, _ ) =
+    Svg.g []
         [ Svg.image
-            [ Svg.Attributes.xlinkHref "hex.png"
+            [ Render.hexTransform position
+            , Svg.Attributes.xlinkHref "hex-column.png"
+            , Svg.Attributes.width (String.fromFloat (Render.hexSize * 2))
+            , Svg.Attributes.height (String.fromFloat (Render.hexSize * 2))
+            , Svg.Attributes.x (String.fromFloat -Render.hexSize)
+            , Svg.Attributes.y "0"
+            , Svg.Attributes.imageRendering "pixelated"
+            ]
+            []
+        , Svg.image
+            [ Render.hexTransform position
+            , Svg.Attributes.xlinkHref "hex.png"
             , Svg.Attributes.width (String.fromFloat (Render.hexSize * 2))
             , Svg.Attributes.height (String.fromFloat (Render.hexSize * 2))
             , Svg.Attributes.x (String.fromFloat -Render.hexSize)
             , Svg.Attributes.y (String.fromFloat -Render.hexSize)
             , Svg.Attributes.imageRendering "pixelated"
-            , Svg.Attributes.pointerEvents "none"
+            , Svg.Attributes.class "tile"
+            , Svg.Events.onClick (ClickedTile position)
             ]
             []
-        , Render.viewHardcodedHex [ Svg.Attributes.fill "transparent", Svg.Events.onClick (ClickedTile position) ]
         ]
 
 
