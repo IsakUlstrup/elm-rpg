@@ -412,10 +412,12 @@ viewConsole console =
 
 viewSpriteTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
 viewSpriteTile _ ( position, _ ) =
-    Svg.g []
+    Svg.g
+        [ Render.hexTransform position
+        , Svg.Attributes.class "tile"
+        ]
         [ Svg.image
-            [ Render.hexTransform position
-            , Svg.Attributes.xlinkHref "hex-column.png"
+            [ Svg.Attributes.xlinkHref "hex-column.png"
             , Svg.Attributes.width (String.fromFloat (Render.hexSize * 2))
             , Svg.Attributes.height (String.fromFloat (Render.hexSize * 2))
             , Svg.Attributes.x (String.fromFloat -Render.hexSize)
@@ -424,14 +426,12 @@ viewSpriteTile _ ( position, _ ) =
             ]
             []
         , Svg.image
-            [ Render.hexTransform position
-            , Svg.Attributes.xlinkHref "hex.png"
+            [ Svg.Attributes.xlinkHref "hex.png"
             , Svg.Attributes.width (String.fromFloat (Render.hexSize * 2))
             , Svg.Attributes.height (String.fromFloat (Render.hexSize * 2))
             , Svg.Attributes.x (String.fromFloat -Render.hexSize)
             , Svg.Attributes.y (String.fromFloat -Render.hexSize)
             , Svg.Attributes.imageRendering "pixelated"
-            , Svg.Attributes.class "tile"
             , Svg.Events.onClick (ClickedTile position)
             ]
             []
