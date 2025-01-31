@@ -117,7 +117,9 @@ getTiles : Grid a -> List ( Point, a )
 getTiles (Grid grid) =
     grid
         |> Dict.toList
-        |> List.concatMap (\( _, chunk ) -> Dict.toList chunk)
+        |> List.map Tuple.second
+        |> List.foldl Dict.union Dict.empty
+        |> Dict.toList
 
 
 get : Point -> Grid a -> Maybe a
