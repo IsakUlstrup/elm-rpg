@@ -2,6 +2,7 @@ module Engine.Render exposing
     ( Camera
     , camera
     , cameraToPoint
+    , hexSize
     , hexTransform
     , moveCameraX
     , moveCameraY

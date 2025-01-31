@@ -410,48 +410,64 @@ viewConsole console =
         ]
 
 
-viewTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
-viewTile attrs ( position, _ ) =
-    let
-        chunkPos : Point
-        chunkPos =
-            Grid.pointToChunk position
-
-        tileHue : Int
-        tileHue =
-            Point.uniqueId chunkPos * 100
-
-        fillColor : Int -> Int -> Svg.Attribute msg
-        fillColor saturation level =
-            Svg.Attributes.fill ("hsl(" ++ String.fromInt tileHue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
-    in
+viewSpriteTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
+viewSpriteTile attrs ( position, _ ) =
     Svg.g
-        ([ Render.hexTransform position
-         , Svg.Attributes.class "tile"
-         , Svg.Events.onClick (ClickedTile position)
-         ]
-            ++ attrs
-        )
-        [ Render.viewHardcodedHex
-            [ fillColor 75 75
+        (Render.hexTransform position :: attrs)
+        [ Svg.image
+            [ Svg.Attributes.xlinkHref "hex.png"
+            , Svg.Attributes.width (String.fromFloat (Render.hexSize * 2))
+            , Svg.Attributes.height (String.fromFloat (Render.hexSize * 2))
+            , Svg.Attributes.x (String.fromFloat -Render.hexSize)
+            , Svg.Attributes.y (String.fromFloat -Render.hexSize)
+            , Svg.Attributes.imageRendering "pixelated"
+            , Svg.Attributes.pointerEvents "none"
             ]
-
-        -- , Svg.text_
-        --     [ Svg.Attributes.stroke "none"
-        --     , Svg.Attributes.fill "black"
-        --     , Svg.Attributes.textAnchor "middle"
-        --     , Svg.Attributes.pointerEvents "none"
-        --     ]
-        --     [ Svg.text (Point.toString position) ]
-        -- , Svg.text_
-        --     [ Svg.Attributes.stroke "none"
-        --     , Svg.Attributes.fill "black"
-        --     , Svg.Attributes.textAnchor "middle"
-        --     , Svg.Attributes.pointerEvents "none"
-        --     , Svg.Attributes.y "30"
-        --     ]
-        --     [ Svg.text (Point.toString chunkPos) ]
+            []
+        , Render.viewHardcodedHex [ Svg.Attributes.fill "transparent", Svg.Events.onClick (ClickedTile position) ]
         ]
+
+
+
+-- viewTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
+-- viewTile attrs ( position, _ ) =
+--     let
+--         chunkPos : Point
+--         chunkPos =
+--             Grid.pointToChunk position
+--         tileHue : Int
+--         tileHue =
+--             Point.uniqueId chunkPos * 100
+--         fillColor : Int -> Int -> Svg.Attribute msg
+--         fillColor saturation level =
+--             Svg.Attributes.fill ("hsl(" ++ String.fromInt tileHue ++ ", " ++ String.fromInt saturation ++ "%, " ++ String.fromInt level ++ "%)")
+--     in
+--     Svg.g
+--         ([ Render.hexTransform position
+--          , Svg.Attributes.class "tile"
+--          , Svg.Events.onClick (ClickedTile position)
+--          ]
+--             ++ attrs
+--         )
+--         [ Render.viewHardcodedHex
+--             [ fillColor 75 75
+--             ]
+--         -- , Svg.text_
+--         --     [ Svg.Attributes.stroke "none"
+--         --     , Svg.Attributes.fill "black"
+--         --     , Svg.Attributes.textAnchor "middle"
+--         --     , Svg.Attributes.pointerEvents "none"
+--         --     ]
+--         --     [ Svg.text (Point.toString position) ]
+--         -- , Svg.text_
+--         --     [ Svg.Attributes.stroke "none"
+--         --     , Svg.Attributes.fill "black"
+--         --     , Svg.Attributes.textAnchor "middle"
+--         --     , Svg.Attributes.pointerEvents "none"
+--         --     , Svg.Attributes.y "30"
+--         --     ]
+--         --     [ Svg.text (Point.toString chunkPos) ]
+--         ]
 
 
 viewGhostTile : List (Svg.Attribute Msg) -> ( Point, Tile ) -> Svg Msg
@@ -543,7 +559,7 @@ view model =
         , Render.svg [ Svg.Attributes.class "game-svg" ]
             [ Render.camera model.camera
                 [ Svg.Attributes.class "camera" ]
-                [ Svg.g [] (model.map |> Grid.getTiles |> List.map (viewTile []))
+                [ Svg.g [] (model.map |> Grid.getTiles |> List.map (viewSpriteTile []))
                 , Svg.g []
                     (if model.editMode then
                         Point.circle (7 * (1 / model.camera.zoom) |> round) cameraPoint |> List.map (\pos -> ( pos, () )) |> List.map (viewGhostTile [])
