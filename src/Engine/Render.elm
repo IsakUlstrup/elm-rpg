@@ -6,6 +6,7 @@ module Engine.Render exposing
     , hexTransform
     , moveCameraX
     , moveCameraY
+    , moveToPoint
     , newCamera
     , svg
     , viewDebugPath
@@ -51,6 +52,15 @@ moveCameraY delta cam =
 zoomCamera : Float -> Camera -> Camera
 zoomCamera delta cam =
     { cam | zoom = cam.zoom + delta |> clamp 0.1 3 }
+
+
+moveToPoint : Point -> Camera -> Camera
+moveToPoint position cam =
+    let
+        ( x, y ) =
+            pointToPixel position
+    in
+    { cam | x = x, y = y }
 
 
 {-| Hex size constant

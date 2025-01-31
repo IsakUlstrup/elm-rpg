@@ -72,7 +72,8 @@ body {
     /* shape-rendering: optimizeSpeed; */
 }
 
-.player {
+.player,
+.camera {
     transition: transform 400ms linear;
     image-rendering: pixelated;
 }

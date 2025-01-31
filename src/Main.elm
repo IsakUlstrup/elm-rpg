@@ -253,7 +253,11 @@ update msg model =
         Tick dt ->
             model
                 |> (\m ->
-                        { m | camera = m.camera |> cameraInput dt m.keyState }
+                        if m.editMode then
+                            { m | camera = m.camera |> cameraInput dt m.keyState }
+
+                        else
+                            { m | camera = Render.moveToPoint m.player.position m.camera }
                    )
                 |> (\m ->
                         { m | player = m.player |> tickPlayer dt |> movePlayer }
