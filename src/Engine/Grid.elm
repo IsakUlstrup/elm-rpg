@@ -30,7 +30,7 @@ type Grid a
 
 chunkSize : Int
 chunkSize =
-    5
+    10
 
 
 drawDistance : Int
